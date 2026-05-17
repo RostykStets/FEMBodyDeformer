@@ -13,6 +13,9 @@ class SimpleCamera {
     var angleY by mutableStateOf(30f)
     var scaleModifier by mutableStateOf(1.0f)
 
+    var targetOffsetX by mutableStateOf(0f)
+    var targetOffsetY by mutableStateOf(0f)
+
     fun project(point: Vector3, width: Float, height: Float, baseScale: Float): Offset {
         val radX = angleX * (PI / 180.0)
         val radY = angleY * (PI / 180.0)
@@ -27,8 +30,8 @@ class SimpleCamera {
         val perspective = distance / (distance - z2)
         val finalScale = baseScale * scaleModifier
 
-        val screenX = (width / 2f) + (x1 * finalScale * perspective)
-        val screenY = (height / 2f) - (y2 * finalScale * perspective)
+        val screenX = (width / 2f) + (x1 * finalScale * perspective) + targetOffsetX
+        val screenY = (height / 2f) - (y2 * finalScale * perspective) + targetOffsetY
 
         return Offset(screenX, screenY)
     }

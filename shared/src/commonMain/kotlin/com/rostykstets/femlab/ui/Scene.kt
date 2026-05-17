@@ -2,7 +2,6 @@ package com.rostykstets.femlab.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,13 +20,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
-
+import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -39,16 +37,15 @@ import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.baloo_bhai_2_regular
 import org.jetbrains.compose.resources.Font
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Scene() {
 
     var bodySize by remember { mutableStateOf(Vector3(4f, 4f, 4f)) }
     var bodySplits by remember { mutableStateOf(Vector3(2f, 2f, 2f)) }
 
-    var sizeXText by remember { mutableStateOf("4.00") }
-    var sizeYText by remember { mutableStateOf("4.00") }
-    var sizeZText by remember { mutableStateOf("4.00") }
+    var sizeXText by remember { mutableStateOf("4") }
+    var sizeYText by remember { mutableStateOf("4") }
+    var sizeZText by remember { mutableStateOf("4") }
 
     var splitXText by remember { mutableStateOf("2") }
     var splitYText by remember { mutableStateOf("2") }
@@ -133,25 +130,78 @@ fun Scene() {
                 .weight(1f)
                 .background(Color(0xFFF5F5F5))
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val fingersCount = event.changes.size
 
-                        camera.scaleModifier = (camera.scaleModifier * zoom).coerceIn(0.3f, 5.0f)
+                            if (event.type == PointerEventType.Move) {
+                                val change = event.changes.firstOrNull()
+                                if (change != null) {
+                                    val dragAmount = change.position - change.previousPosition
 
-                        camera.angleX += pan.x * 0.4f
-                        camera.angleY = (camera.angleY - pan.y * 0.4f).coerceIn(-85f, 85f)
+                                    val isRightClick = event.buttons.isSecondaryPressed
+                                    val isThreeFingers = fingersCount >= 3
+
+                                    if (isThreeFingers || isRightClick) {
+                                        camera.targetOffsetX += dragAmount.x
+                                        camera.targetOffsetY += dragAmount.y
+                                    }
+                                    else if (fingersCount == 2) {
+                                        val change0 = event.changes.getOrNull(0)
+                                        val change1 = event.changes.getOrNull(1)
+                                        if (change0 != null && change1 != null) {
+                                            val currDistance = (change0.position - change1.position).getDistance()
+                                            val prevDistance = (change0.previousPosition - change1.previousPosition).getDistance()
+
+                                            if (prevDistance > 0f) {
+                                                val zoomRatio = currDistance / prevDistance
+                                                camera.scaleModifier = (camera.scaleModifier * zoomRatio).coerceIn(0.3f, 5.0f)
+                                            }
+                                        }
+                                    }
+                                    else if (fingersCount == 1 && !isRightClick) {
+                                        camera.angleX += dragAmount.x * 0.4f
+                                        camera.angleY = (camera.angleY - dragAmount.y * 0.4f).coerceIn(-85f, 85f)
+                                    }
+
+                                    change.consume()
+                                }
+                            }
+                        }
                     }
                 }
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            
                             if (event.type == PointerEventType.Scroll) {
-                                val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
-                                if (scrollDelta != 0f) {
-                                    val zoomFactor = if (scrollDelta > 0) 0.9f else 1.1f
-                                    camera.scaleModifier =
-                                        (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
+                                val change = event.changes.firstOrNull()
+                                if (change != null) {
+                                    val rawY = change.scrollDelta.y
+                                    if (rawY != 0f) {
+                                        val zoomFactor = kotlin.math.exp(-rawY * 0.05f)
+                                        camera.scaleModifier = (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
+                                        change.consume()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            if (event.type == PointerEventType.Scroll) {
+                                val change = event.changes.firstOrNull()
+                                if (change != null) {
+                                    val rawY = change.scrollDelta.y
+                                    if (rawY != 0f) {
+                                        val zoomFactor = kotlin.math.exp(-rawY * 0.05f)
+                                        camera.scaleModifier = (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
+                                        change.consume()
+                                    }
                                 }
                             }
                         }
