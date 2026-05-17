@@ -2,7 +2,6 @@ package com.rostykstets.femlab.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,10 +21,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.PointerEventType
+
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -37,6 +39,7 @@ import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.baloo_bhai_2_regular
 import org.jetbrains.compose.resources.Font
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun Scene() {
 
@@ -130,15 +133,28 @@ fun Scene() {
                 .weight(1f)
                 .background(Color(0xFFF5F5F5))
                 .pointerInput(Unit) {
-                    detectTransformGestures { _: Offset, _: Offset, zoom: Float, _: Float ->
+                    detectTransformGestures { _, pan, zoom, _ ->
+
                         camera.scaleModifier = (camera.scaleModifier * zoom).coerceIn(0.3f, 5.0f)
+
+                        camera.angleX += pan.x * 0.4f
+                        camera.angleY = (camera.angleY - pan.y * 0.4f).coerceIn(-85f, 85f)
                     }
                 }
                 .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        camera.angleX += dragAmount.x * 0.4f
-                        camera.angleY = (camera.angleY - dragAmount.y * 0.4f).coerceIn(-85f, 85f)
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            
+                            if (event.type == PointerEventType.Scroll) {
+                                val scrollDelta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+                                if (scrollDelta != 0f) {
+                                    val zoomFactor = if (scrollDelta > 0) 0.9f else 1.1f
+                                    camera.scaleModifier =
+                                        (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
+                                }
+                            }
+                        }
                     }
                 }
         ) {
@@ -158,9 +174,7 @@ fun Scene() {
                 drawLine(Color.Green, p0, pY, strokeWidth = 4f)
                 drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
 
-
                 drawWireCube(bodySize, camera, w, h, baseScale)
-
 
                 bodyPoints.forEachIndexed { index, vertex ->
                     val screenPt = camera.project(vertex, w, h, baseScale)
