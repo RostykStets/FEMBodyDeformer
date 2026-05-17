@@ -1,0 +1,224 @@
+package com.rostykstets.femlab.ui
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import femlab.shared.generated.resources.Res
+import femlab.shared.generated.resources.baloo_bhai_2_regular
+import org.jetbrains.compose.resources.Font
+
+@Composable
+fun Scene() {
+
+    var bodySize by remember { mutableStateOf(Vector3(4f, 4f, 4f)) }
+    var bodySplits by remember { mutableStateOf(Vector3(2f, 2f, 2f)) }
+
+    var sizeXText by remember { mutableStateOf("4.00") }
+    var sizeYText by remember { mutableStateOf("4.00") }
+    var sizeZText by remember { mutableStateOf("4.00") }
+
+    var splitXText by remember { mutableStateOf("2") }
+    var splitYText by remember { mutableStateOf("2") }
+    var splitZText by remember { mutableStateOf("2") }
+
+    val bodyPoints = remember(bodySize, bodySplits) { buildBodyShape(bodySize, bodySplits) }
+    val camera = remember { SimpleCamera() }
+
+    val textMeasurer = rememberTextMeasurer()
+    val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
+
+    Row(modifier = Modifier.fillMaxSize()) {
+
+        Column(
+            modifier = Modifier
+                .width(180.dp)
+                .background(color = Color.White)
+                .verticalScroll(rememberScrollState())
+                .padding(6.dp)
+                .fillMaxHeight()
+        ) {
+            Text("Розміри:", modifier = Modifier.padding(bottom = 2.dp))
+            OutlinedTextField(
+                value = sizeXText,
+                onValueChange = {
+                    sizeXText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(x = v) }
+                },
+                label = { Text("Size X") },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = sizeYText,
+                onValueChange = {
+                    sizeYText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(y = v) }
+                },
+                label = { Text("Size Y") },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = sizeZText,
+                onValueChange = {
+                    sizeZText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(z = v) }
+                },
+                label = { Text("Size Z") },
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Розбиття:", modifier = Modifier.padding(bottom = 2.dp))
+            OutlinedTextField(
+                value = splitXText,
+                onValueChange = {
+                    splitXText = it; it.toFloatOrNull()
+                    ?.let { v -> bodySplits = bodySplits.copy(x = v) }
+                },
+                label = { Text("Split X") },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = splitYText,
+                onValueChange = {
+                    splitYText = it; it.toFloatOrNull()
+                    ?.let { v -> bodySplits = bodySplits.copy(y = v) }
+                },
+                label = { Text("Split Y") },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = splitZText,
+                onValueChange = {
+                    splitZText = it; it.toFloatOrNull()
+                    ?.let { v -> bodySplits = bodySplits.copy(z = v) }
+                },
+                label = { Text("Split Z") },
+                singleLine = true
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f)
+                .background(Color(0xFFF5F5F5))
+                .pointerInput(Unit) {
+                    detectTransformGestures { _: Offset, _: Offset, zoom: Float, _: Float ->
+                        camera.scaleModifier = (camera.scaleModifier * zoom).coerceIn(0.3f, 5.0f)
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        camera.angleX += dragAmount.x * 0.4f
+                        camera.angleY = (camera.angleY - dragAmount.y * 0.4f).coerceIn(-85f, 85f)
+                    }
+                }
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+                if (w <= 0f || h <= 0f) return@Canvas
+
+                val baseScale = minOf(w, h) / 12f
+
+                val p0 = camera.project(Vector3(0f, 0f, 0f), w, h, baseScale)
+                val pX = camera.project(Vector3(2f, 0f, 0f), w, h, baseScale)
+                val pY = camera.project(Vector3(0f, 2f, 0f), w, h, baseScale)
+                val pZ = camera.project(Vector3(0f, 0f, 2f), w, h, baseScale)
+
+                drawLine(Color.Red, p0, pX, strokeWidth = 4f)
+                drawLine(Color.Green, p0, pY, strokeWidth = 4f)
+                drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
+
+
+                drawWireCube(bodySize, camera, w, h, baseScale)
+
+
+                bodyPoints.forEachIndexed { index, vertex ->
+                    val screenPt = camera.project(vertex, w, h, baseScale)
+
+                    drawCircle(
+                        color = Color(0xFF0055FF),
+                        radius = 4.5f,
+                        center = screenPt
+                    )
+
+                    drawText(
+                        textMeasurer = textMeasurer,
+                        text = "${index + 1}",
+                        topLeft = Offset(
+                            x = screenPt.x + 8f,
+                            y = screenPt.y - 12f
+                        ),
+                        style = TextStyle(
+                            color = Color.Black,
+                            fontSize = 11.sp,
+                            fontFamily = customFontFamily
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+fun DrawScope.drawWireCube(
+    size: Vector3,
+    camera: SimpleCamera,
+    w: Float,
+    h: Float,
+    baseScale: Float
+) {
+    val hX = size.x / 2f
+    val hY = size.y
+    val hZ = size.z / 2f
+
+    val vertices = listOf(
+        Vector3(-hX, 0f, -hZ), Vector3(hX, 0f, -hZ), Vector3(hX, 0f, hZ), Vector3(-hX, 0f, hZ),
+        Vector3(-hX, hY, -hZ), Vector3(hX, hY, -hZ), Vector3(hX, hY, hZ), Vector3(-hX, hY, hZ)
+    )
+    val projected = vertices.map { camera.project(it, w, h, baseScale) }
+
+    val edges = listOf(
+        0 to 1, 1 to 2, 2 to 3, 3 to 0,
+        4 to 5, 5 to 6, 6 to 7, 7 to 4,
+        0 to 4, 1 to 5, 2 to 6, 3 to 7
+    )
+
+    edges.forEach { (from, to) ->
+        drawLine(
+            color = Color(0xFF333333),
+            start = projected[from],
+            end = projected[to],
+            strokeWidth = 2f
+        )
+    }
+}
