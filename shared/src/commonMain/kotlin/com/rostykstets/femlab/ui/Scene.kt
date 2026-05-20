@@ -2,6 +2,7 @@ package com.rostykstets.femlab.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,8 +11,10 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -20,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -248,6 +252,33 @@ fun Scene() {
                             fontFamily = customFontFamily
                         )
                     )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp)
+                    .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                    .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
+                    .padding(8.dp)
+            ) {
+                Text("Осі координат:", style = TextStyle(fontSize = 11.sp, color = Color.Gray), modifier = Modifier.padding(bottom = 4.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                    Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Вісь X", style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                    Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Вісь Y", style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                    Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Вісь Z", style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
                 }
             }
         }
