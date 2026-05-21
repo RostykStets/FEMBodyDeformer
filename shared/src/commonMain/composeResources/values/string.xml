@@ -1,0 +1,14 @@
+<resources>
+    <string name="axis_x">Вісь X</string>
+    <string name="axis_y">Вісь Y</string>
+    <string name="axis_z">Вісь Z</string>
+    <string name="axes">Осі координат:</string>
+    <string name="dimensions">Розміри:</string>
+    <string name="size_x">Розмір X:</string>
+    <string name="size_y">Розмір Y:</string>
+    <string name="size_z">Розмір Z:</string>
+    <string name="splits">Розбиття:</string>
+    <string name="split_x">Розбиття X:</string>
+    <string name="split_y">Розбиття Y:</string>
+    <string name="split_z">Розбиття Z:</string>
+</resources>

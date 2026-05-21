@@ -37,9 +37,26 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rostykstets.femlab.ui.components.PureBlue
+import com.rostykstets.femlab.ui.components.VeryDarkGray
+import com.rostykstets.femlab.ui.components.VeryLightGray
+import com.rostykstets.femlab.ui.components.VeryLightGray2
 import femlab.shared.generated.resources.Res
+import femlab.shared.generated.resources.axes
+import femlab.shared.generated.resources.axis_x
+import femlab.shared.generated.resources.axis_y
+import femlab.shared.generated.resources.axis_z
 import femlab.shared.generated.resources.baloo_bhai_2_regular
+import femlab.shared.generated.resources.dimensions
+import femlab.shared.generated.resources.size_z
+import femlab.shared.generated.resources.size_x
+import femlab.shared.generated.resources.size_y
+import femlab.shared.generated.resources.split_z
+import femlab.shared.generated.resources.split_x
+import femlab.shared.generated.resources.split_y
+import femlab.shared.generated.resources.splits
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun Scene() {
@@ -71,13 +88,13 @@ fun Scene() {
                 .padding(6.dp)
                 .fillMaxHeight()
         ) {
-            Text("Розміри:", modifier = Modifier.padding(bottom = 2.dp))
+            Text(text = stringResource(Res.string.dimensions), modifier = Modifier.padding(bottom = 2.dp))
             OutlinedTextField(
                 value = sizeXText,
                 onValueChange = {
                     sizeXText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(x = v) }
                 },
-                label = { Text("Size X") },
+                label = { Text(stringResource(Res.string.size_x)) },
                 singleLine = true
             )
             OutlinedTextField(
@@ -85,7 +102,7 @@ fun Scene() {
                 onValueChange = {
                     sizeYText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(y = v) }
                 },
-                label = { Text("Size Y") },
+                label = { Text(stringResource(Res.string.size_y)) },
                 singleLine = true
             )
             OutlinedTextField(
@@ -93,19 +110,19 @@ fun Scene() {
                 onValueChange = {
                     sizeZText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(z = v) }
                 },
-                label = { Text("Size Z") },
+                label = { Text(stringResource(Res.string.size_z)) },
                 singleLine = true
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Розбиття:", modifier = Modifier.padding(bottom = 2.dp))
+            Text(text = stringResource(Res.string.splits), modifier = Modifier.padding(bottom = 2.dp))
             OutlinedTextField(
                 value = splitXText,
                 onValueChange = {
                     splitXText = it; it.toFloatOrNull()
                     ?.let { v -> bodySplits = bodySplits.copy(x = v) }
                 },
-                label = { Text("Split X") },
+                label = { Text(stringResource(Res.string.split_x)) },
                 singleLine = true
             )
             OutlinedTextField(
@@ -114,7 +131,7 @@ fun Scene() {
                     splitYText = it; it.toFloatOrNull()
                     ?.let { v -> bodySplits = bodySplits.copy(y = v) }
                 },
-                label = { Text("Split Y") },
+                label = { Text(stringResource(Res.string.split_y)) },
                 singleLine = true
             )
             OutlinedTextField(
@@ -123,7 +140,7 @@ fun Scene() {
                     splitZText = it; it.toFloatOrNull()
                     ?.let { v -> bodySplits = bodySplits.copy(z = v) }
                 },
-                label = { Text("Split Z") },
+                label = { Text(stringResource(Res.string.split_z)) },
                 singleLine = true
             )
         }
@@ -132,7 +149,7 @@ fun Scene() {
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
-                .background(Color(0xFFF5F5F5))
+                .background(VeryLightGray2)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -234,7 +251,7 @@ fun Scene() {
                     val screenPt = camera.project(vertex, w, h, baseScale)
 
                     drawCircle(
-                        color = Color(0xFF0055FF),
+                        color = PureBlue,
                         radius = 4.5f,
                         center = screenPt
                     )
@@ -260,25 +277,25 @@ fun Scene() {
                     .align(Alignment.TopEnd)
                     .padding(12.dp)
                     .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-                    .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
+                    .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
                     .padding(8.dp)
             ) {
-                Text("Осі координат:", style = TextStyle(fontSize = 11.sp, color = Color.Gray), modifier = Modifier.padding(bottom = 4.dp))
+                Text(stringResource(Res.string.axes), style = TextStyle(fontSize = 11.sp, color = Color.Gray), modifier = Modifier.padding(bottom = 4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
                     Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Вісь X", style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(stringResource(Res.string.axis_x), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
                     Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Вісь Y", style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(stringResource(Res.string.axis_y), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
                     Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Вісь Z", style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(stringResource(Res.string.axis_z), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
                 }
             }
         }
@@ -310,7 +327,7 @@ fun DrawScope.drawWireCube(
 
     edges.forEach { (from, to) ->
         drawLine(
-            color = Color(0xFF333333),
+            color = VeryDarkGray,
             start = projected[from],
             end = projected[to],
             strokeWidth = 2f
