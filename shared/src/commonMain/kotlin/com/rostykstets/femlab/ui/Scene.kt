@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +52,7 @@ import femlab.shared.generated.resources.dimensions
 import femlab.shared.generated.resources.parameters
 import femlab.shared.generated.resources.poisson_ratio
 import femlab.shared.generated.resources.pressure
+import femlab.shared.generated.resources.show_indexes
 import femlab.shared.generated.resources.size_z
 import femlab.shared.generated.resources.size_x
 import femlab.shared.generated.resources.size_y
@@ -85,6 +87,8 @@ fun Scene() {
 
     val textMeasurer = rememberTextMeasurer()
     val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
+
+    var showIndexes by remember { mutableStateOf(false) }
 
     Row(modifier = Modifier.fillMaxSize()) {
 
@@ -308,70 +312,101 @@ fun Scene() {
                         center = screenPt
                     )
 
-                    drawText(
-                        textMeasurer = textMeasurer,
-                        text = "${index + 1}",
-                        topLeft = Offset(
-                            x = screenPt.x + 8f,
-                            y = screenPt.y - 12f
-                        ),
-                        style = TextStyle(
-                            color = Color.Black,
-                            fontSize = 11.sp,
-                            fontFamily = customFontFamily
+                    if (showIndexes) {
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            text = "${index + 1}",
+                            topLeft = Offset(
+                                x = screenPt.x + 8f,
+                                y = screenPt.y - 12f
+                            ),
+                            style = TextStyle(
+                                color = Color.Black,
+                                fontSize = 11.sp,
+                                fontFamily = customFontFamily
+                            )
                         )
-                    )
+                    }
                 }
             }
 
             Column(
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-                    .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
-                    .padding(8.dp)
+                    .align(Alignment.TopEnd),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    stringResource(Res.string.axes),
-                    style = TextStyle(fontSize = 11.sp, color = Color.Gray),
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .width(150.dp)
+                        .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                        .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        stringResource(Res.string.axes),
+                        style = TextStyle(fontSize = 11.sp, color = Color.Gray),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                ) {
-                    Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        stringResource(Res.string.axis_x),
-                        style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(Res.string.axis_x),
+                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(Res.string.axis_y),
+                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(Res.string.axis_z),
+                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                        )
+                    }
+
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = 2.dp)
+                        .width(150.dp)
+                        .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                        .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
+                        .padding(8.dp)
                 ) {
-                    Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        stringResource(Res.string.axis_y),
-                        style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                    Checkbox(
+                        checked = showIndexes,
+                        onCheckedChange = { showIndexes = it },
+                        modifier = Modifier.size(20.dp)
                     )
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                ) {
-                    Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
-                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
                     Text(
-                        stringResource(Res.string.axis_z),
+                        stringResource(Res.string.show_indexes),
                         style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
                     )
                 }
             }
+
         }
     }
 }

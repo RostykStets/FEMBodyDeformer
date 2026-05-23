@@ -15,4 +15,5 @@
     <string name="young_module">Модуль Юнга:</string>
     <string name="poisson_ratio">Коефіцієнт Пуассона:</string>
     <string name="pressure">Напруження:</string>
+    <string name="show_indexes">Показати індекси</string>
 </resources>
