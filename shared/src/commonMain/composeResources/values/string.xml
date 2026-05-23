@@ -11,4 +11,8 @@
     <string name="split_x">Розбиття X:</string>
     <string name="split_y">Розбиття Y:</string>
     <string name="split_z">Розбиття Z:</string>
+    <string name="parameters">Параметри:</string>
+    <string name="young_module">Модуль Юнга:</string>
+    <string name="poisson_ratio">Коефіцієнт Пуассона:</string>
+    <string name="pressure">Напруження:</string>
 </resources>

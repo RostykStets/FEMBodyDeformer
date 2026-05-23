@@ -48,6 +48,9 @@ import femlab.shared.generated.resources.axis_y
 import femlab.shared.generated.resources.axis_z
 import femlab.shared.generated.resources.baloo_bhai_2_regular
 import femlab.shared.generated.resources.dimensions
+import femlab.shared.generated.resources.parameters
+import femlab.shared.generated.resources.poisson_ratio
+import femlab.shared.generated.resources.pressure
 import femlab.shared.generated.resources.size_z
 import femlab.shared.generated.resources.size_x
 import femlab.shared.generated.resources.size_y
@@ -55,6 +58,7 @@ import femlab.shared.generated.resources.split_z
 import femlab.shared.generated.resources.split_x
 import femlab.shared.generated.resources.split_y
 import femlab.shared.generated.resources.splits
+import femlab.shared.generated.resources.young_module
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 
@@ -72,6 +76,10 @@ fun Scene() {
     var splitYText by remember { mutableStateOf("2") }
     var splitZText by remember { mutableStateOf("2") }
 
+    var youngModule by remember { mutableStateOf("4") }
+    var poissonRatio by remember { mutableStateOf("4") }
+    var pressure by remember { mutableStateOf("4") }
+
     val bodyPoints = remember(bodySize, bodySplits) { buildBodyShape(bodySize, bodySplits) }
     val camera = remember { SimpleCamera() }
 
@@ -88,7 +96,10 @@ fun Scene() {
                 .padding(6.dp)
                 .fillMaxHeight()
         ) {
-            Text(text = stringResource(Res.string.dimensions), modifier = Modifier.padding(bottom = 2.dp))
+            Text(
+                text = stringResource(Res.string.dimensions),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
             OutlinedTextField(
                 value = sizeXText,
                 onValueChange = {
@@ -115,7 +126,10 @@ fun Scene() {
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = stringResource(Res.string.splits), modifier = Modifier.padding(bottom = 2.dp))
+            Text(
+                text = stringResource(Res.string.splits),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
             OutlinedTextField(
                 value = splitXText,
                 onValueChange = {
@@ -143,6 +157,34 @@ fun Scene() {
                 label = { Text(stringResource(Res.string.split_z)) },
                 singleLine = true
             )
+            Text(
+                text = stringResource(Res.string.parameters),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
+            OutlinedTextField(
+                value = youngModule,
+                onValueChange = {
+                    youngModule = it
+                },
+                label = { Text(stringResource(Res.string.young_module)) },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = poissonRatio,
+                onValueChange = {
+                    poissonRatio = it
+                },
+                label = { Text(stringResource(Res.string.poisson_ratio)) },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = pressure,
+                onValueChange = {
+                    pressure = it
+                },
+                label = { Text(stringResource(Res.string.pressure)) },
+                singleLine = true
+            )
         }
 
         Box(
@@ -167,23 +209,31 @@ fun Scene() {
                                     if (isThreeFingers || isRightClick) {
                                         camera.targetOffsetX += dragAmount.x
                                         camera.targetOffsetY += dragAmount.y
-                                    }
-                                    else if (fingersCount == 2) {
+                                    } else if (fingersCount == 2) {
                                         val change0 = event.changes.getOrNull(0)
                                         val change1 = event.changes.getOrNull(1)
                                         if (change0 != null && change1 != null) {
-                                            val currDistance = (change0.position - change1.position).getDistance()
-                                            val prevDistance = (change0.previousPosition - change1.previousPosition).getDistance()
+                                            val currDistance =
+                                                (change0.position - change1.position).getDistance()
+                                            val prevDistance =
+                                                (change0.previousPosition - change1.previousPosition).getDistance()
 
                                             if (prevDistance > 0f) {
                                                 val zoomRatio = currDistance / prevDistance
-                                                camera.scaleModifier = (camera.scaleModifier * zoomRatio).coerceIn(0.3f, 5.0f)
+                                                camera.scaleModifier =
+                                                    (camera.scaleModifier * zoomRatio).coerceIn(
+                                                        0.3f,
+                                                        5.0f
+                                                    )
                                             }
                                         }
-                                    }
-                                    else if (fingersCount == 1 && !isRightClick) {
+                                    } else if (fingersCount == 1 && !isRightClick) {
                                         camera.angleX += dragAmount.x * 0.4f
-                                        camera.angleY = (camera.angleY - dragAmount.y * 0.4f).coerceIn(-85f, 85f)
+                                        camera.angleY =
+                                            (camera.angleY - dragAmount.y * 0.4f).coerceIn(
+                                                -85f,
+                                                85f
+                                            )
                                     }
 
                                     change.consume()
@@ -202,7 +252,8 @@ fun Scene() {
                                     val rawY = change.scrollDelta.y
                                     if (rawY != 0f) {
                                         val zoomFactor = kotlin.math.exp(-rawY * 0.05f)
-                                        camera.scaleModifier = (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
+                                        camera.scaleModifier =
+                                            (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
                                         change.consume()
                                     }
                                 }
@@ -220,7 +271,8 @@ fun Scene() {
                                     val rawY = change.scrollDelta.y
                                     if (rawY != 0f) {
                                         val zoomFactor = kotlin.math.exp(-rawY * 0.05f)
-                                        camera.scaleModifier = (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
+                                        camera.scaleModifier =
+                                            (camera.scaleModifier * zoomFactor).coerceIn(0.3f, 5.0f)
                                         change.consume()
                                     }
                                 }
@@ -280,22 +332,44 @@ fun Scene() {
                     .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
                     .padding(8.dp)
             ) {
-                Text(stringResource(Res.string.axes), style = TextStyle(fontSize = 11.sp, color = Color.Gray), modifier = Modifier.padding(bottom = 4.dp))
+                Text(
+                    stringResource(Res.string.axes),
+                    style = TextStyle(fontSize = 11.sp, color = Color.Gray),
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
 
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) {
                     Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.axis_x), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(
+                        stringResource(Res.string.axis_x),
+                        style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                    )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) {
                     Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.axis_y), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(
+                        stringResource(Res.string.axis_y),
+                        style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                    )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) {
                     Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(Res.string.axis_z), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(
+                        stringResource(Res.string.axis_z),
+                        style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                    )
                 }
             }
         }
