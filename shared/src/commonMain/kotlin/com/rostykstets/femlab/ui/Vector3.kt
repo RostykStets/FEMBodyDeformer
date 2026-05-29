@@ -24,3 +24,7 @@ fun buildBodyShape(size: Vector3, splits: Vector3): List<Vector3> {
     }
     return body
 }
+
+fun Vector3.product(): Int {
+    return (x * y * z).toInt()
+}
