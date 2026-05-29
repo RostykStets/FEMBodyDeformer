@@ -149,4 +149,14 @@ class FEMBody {
         }
         return nodeCounter
     }
+
+    // Замість математичного запису NT[localNode, elementId]
+    fun getGlobalNodeId(localNode: Int, elementId: Int): Int {
+        // Формула лінеаризації двовимірної матриці (стовпчиковий варіант):
+        return nt[(localNode - 1) + (elementId - 1) * 20]
+    }
+
+    fun getX(nodeGlobalId: Int): Double = akt[(nodeGlobalId - 1) * 3 + 0]
+    fun getY(nodeGlobalId: Int): Double = akt[(nodeGlobalId - 1) * 3 + 1]
+    fun getZ(nodeGlobalId: Int): Double = akt[(nodeGlobalId - 1) * 3 + 2]
 }
