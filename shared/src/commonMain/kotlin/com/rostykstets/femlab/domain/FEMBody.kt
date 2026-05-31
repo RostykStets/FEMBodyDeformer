@@ -28,9 +28,7 @@ class FEMBody {
 
     fun buildElements(bodySize: Vector3, splits: Vector3) {
         nel = splits.product()
-        val ax = bodySize.x.toInt()
-        val ay = bodySize.y.toInt()
-        val az = bodySize.z.toInt()
+
         val nx = splits.x.toInt()
         val ny = splits.y.toInt()
         val nz = splits.z.toInt()
@@ -39,9 +37,10 @@ class FEMBody {
         akt = DoubleArray(3 * nqp)
         nt = IntArray(20 * nel)
 
-        val hx = ax / nx
-        val hy = ay / ny
-        val hz = az / nz
+        // Рахуємо крок сітки у Double, щоб не втратити точність!
+        val hx = bodySize.x.toDouble() / nx
+        val hy = bodySize.y.toDouble() / ny
+        val hz = bodySize.z.toDouble() / nz
 
         val map = Array(2 * nx + 1) { Array(2 * ny + 1) { IntArray(2 * nz + 1) { 0 } } }
         var nodeCounter = 0
@@ -58,6 +57,8 @@ class FEMBody {
                         nodeCounter++
                         map[k][y][i] = nodeCounter
                         val base = (nodeCounter - 1) * 3
+
+                        // Множимо на половину кроку (hx / 2.0)
                         akt[base + 0] = k * (hx / 2.0)
                         akt[base + 1] = y * (hy / 2.0)
                         akt[base + 2] = i * (hz / 2.0)
