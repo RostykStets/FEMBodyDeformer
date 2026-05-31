@@ -3,6 +3,7 @@ package com.rostykstets.femlab.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +21,9 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
@@ -38,7 +42,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rostykstets.femlab.domain.ElementFace
 import com.rostykstets.femlab.domain.FEMBody
+import com.rostykstets.femlab.domain.ProjectedFace
 import com.rostykstets.femlab.ui.components.PureBlue
 import com.rostykstets.femlab.ui.components.VeryLightGray
 import com.rostykstets.femlab.ui.components.VeryLightGray2
@@ -67,7 +73,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun Scene() {
     var bodySize by remember { mutableStateOf(Vector3(4f, 4f, 4f)) }
-    var bodySplits by remember { mutableStateOf(Vector3(2f, 1f, 2f)) } // Розбиття 2х1х2 за Рис. 1б
+    var bodySplits by remember { mutableStateOf(Vector3(2f, 1f, 2f)) }
 
     var sizeXText by remember { mutableStateOf("4") }
     var sizeYText by remember { mutableStateOf("4") }
@@ -81,21 +87,22 @@ fun Scene() {
     var poissonRatio by remember { mutableStateOf("4") }
     var pressure by remember { mutableStateOf("4") }
 
-    // Генерація математичного тіла (масиви AKT та NT за методичкою)
     val femBody = remember(bodySize, bodySplits) {
-        FEMBody().apply {
-            buildElements(bodySize, bodySplits)
-        }
+        FEMBody().apply { buildElements(bodySize, bodySplits) }
+    }
+
+    // Синхронізація лінійного тиску з масивом ZP при зміні тексту
+    LaunchedEffect(pressure) {
+        femBody.updateBoundaryArrays(pressure.toDoubleOrNull() ?: 0.0)
     }
 
     val camera = remember { SimpleCamera() }
     val textMeasurer = rememberTextMeasurer()
-
     val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
     var showIndexes by remember { mutableStateOf(false) }
 
-    Row(modifier = Modifier.fillMaxSize()) {
 
+    Row(modifier = Modifier.fillMaxSize()) {
         // --- Ліва панель налаштувань ---
         Column(
             modifier = Modifier
@@ -105,60 +112,131 @@ fun Scene() {
                 .padding(6.dp)
                 .fillMaxHeight()
         ) {
-            Text(text = stringResource(Res.string.dimensions), modifier = Modifier.padding(bottom = 2.dp))
+            Text(
+                text = stringResource(Res.string.dimensions),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
             OutlinedTextField(
                 value = sizeXText,
-                onValueChange = { sizeXText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(x = v) } },
+                onValueChange = {
+                    sizeXText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(x = v) }
+                },
                 label = { Text(stringResource(Res.string.size_x)) },
                 singleLine = true
             )
             OutlinedTextField(
                 value = sizeYText,
-                onValueChange = { sizeYText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(y = v) } },
+                onValueChange = {
+                    sizeYText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(y = v) }
+                },
                 label = { Text(stringResource(Res.string.size_y)) },
                 singleLine = true
             )
             OutlinedTextField(
                 value = sizeZText,
-                onValueChange = { sizeZText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(z = v) } },
+                onValueChange = {
+                    sizeZText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(z = v) }
+                },
                 label = { Text(stringResource(Res.string.size_z)) },
                 singleLine = true
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = stringResource(Res.string.splits), modifier = Modifier.padding(bottom = 2.dp))
+            Text(
+                text = stringResource(Res.string.splits),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
             OutlinedTextField(
                 value = splitXText,
-                onValueChange = { splitXText = it; it.toFloatOrNull()?.let { v -> bodySplits = bodySplits.copy(x = v) } },
+                onValueChange = {
+                    splitXText = it; it.toFloatOrNull()
+                    ?.let { v -> bodySplits = bodySplits.copy(x = v) }
+                },
                 label = { Text(stringResource(Res.string.split_x)) },
                 singleLine = true
             )
             OutlinedTextField(
                 value = splitYText,
-                onValueChange = { splitYText = it; it.toFloatOrNull()?.let { v -> bodySplits = bodySplits.copy(y = v) } },
+                onValueChange = {
+                    splitYText = it; it.toFloatOrNull()
+                    ?.let { v -> bodySplits = bodySplits.copy(y = v) }
+                },
                 label = { Text(stringResource(Res.string.split_y)) },
                 singleLine = true
             )
             OutlinedTextField(
                 value = splitZText,
-                onValueChange = { splitZText = it; it.toFloatOrNull()?.let { v -> bodySplits = bodySplits.copy(z = v) } },
+                onValueChange = {
+                    splitZText = it; it.toFloatOrNull()
+                    ?.let { v -> bodySplits = bodySplits.copy(z = v) }
+                },
                 label = { Text(stringResource(Res.string.split_z)) },
                 singleLine = true
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = stringResource(Res.string.parameters), modifier = Modifier.padding(bottom = 2.dp))
-            OutlinedTextField(value = youngModule, onValueChange = { youngModule = it }, label = { Text(stringResource(Res.string.young_module)) }, singleLine = true)
-            OutlinedTextField(value = poissonRatio, onValueChange = { poissonRatio = it }, label = { Text(stringResource(Res.string.poisson_ratio)) }, singleLine = true)
-            OutlinedTextField(value = pressure, onValueChange = { pressure = it }, label = { Text(stringResource(Res.string.pressure)) }, singleLine = true)
+            Text(
+                text = stringResource(Res.string.parameters),
+                modifier = Modifier.padding(bottom = 2.dp)
+            )
+            OutlinedTextField(
+                value = youngModule,
+                onValueChange = { youngModule = it },
+                label = { Text(stringResource(Res.string.young_module)) },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = poissonRatio,
+                onValueChange = { poissonRatio = it },
+                label = { Text(stringResource(Res.string.poisson_ratio)) },
+                singleLine = true
+            )
+            OutlinedTextField(
+                value = pressure,
+                onValueChange = { pressure = it },
+                label = { Text(stringResource(Res.string.pressure)) },
+                singleLine = true
+            )
         }
 
-        // --- Область 3D Рендерингу ---
+        // --- Область 3D Рендерингу з виправленим Z-буфером ---
+        val projectedFacesList = remember { mutableStateListOf<ProjectedFace>() }
+
         Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
                 .background(VeryLightGray2)
+                .pointerInput(bodySize, bodySplits) {
+                    detectTapGestures(
+                        onTap = { clickOffset ->
+                            // Передаємо список із розрахованою глибиною
+                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+                            if (clickedFace != null) {
+                                if (femBody.fixedFaces.contains(clickedFace)) {
+                                    femBody.fixedFaces.remove(clickedFace)
+                                } else {
+                                    femBody.fixedFaces.add(clickedFace)
+                                    femBody.loadedFaces.remove(clickedFace)
+                                }
+                                femBody.updateBoundaryArrays(pressure.toDoubleOrNull() ?: 0.0)
+                            }
+                        },
+                        onLongPress = { clickOffset ->
+                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+                            if (clickedFace != null) {
+                                if (femBody.loadedFaces.contains(clickedFace)) {
+                                    femBody.loadedFaces.remove(clickedFace)
+                                } else {
+                                    femBody.loadedFaces.add(clickedFace)
+                                    femBody.fixedFaces.remove(clickedFace)
+                                }
+                                femBody.updateBoundaryArrays(pressure.toDoubleOrNull() ?: 0.0)
+                            }
+                        }
+                    )
+                }
+                // Твоя рідна обробка камери (залишається без змін)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -168,25 +246,32 @@ fun Scene() {
                                 val change = event.changes.firstOrNull()
                                 if (change != null) {
                                     val dragAmount = change.position - change.previousPosition
-                                    val isRightClick = event.buttons.isSecondaryPressed
-                                    val isThreeFingers = fingersCount >= 3
-
-                                    if (isThreeFingers || isRightClick) {
+                                    if (event.buttons.isSecondaryPressed || fingersCount >= 3) {
                                         camera.targetOffsetX += dragAmount.x
                                         camera.targetOffsetY += dragAmount.y
                                     } else if (fingersCount == 2) {
                                         val change0 = event.changes.getOrNull(0)
                                         val change1 = event.changes.getOrNull(1)
                                         if (change0 != null && change1 != null) {
-                                            val currDistance = (change0.position - change1.position).getDistance()
-                                            val prevDistance = (change0.previousPosition - change1.previousPosition).getDistance()
+                                            val currDistance =
+                                                (change0.position - change1.position).getDistance()
+                                            val prevDistance =
+                                                (change0.previousPosition - change1.previousPosition).getDistance()
                                             if (prevDistance > 0f) {
-                                                camera.scaleModifier = (camera.scaleModifier * (currDistance / prevDistance)).coerceIn(0.3f, 5.0f)
+                                                camera.scaleModifier =
+                                                    (camera.scaleModifier * (currDistance / prevDistance)).coerceIn(
+                                                        0.3f,
+                                                        5.0f
+                                                    )
                                             }
                                         }
-                                    } else if (fingersCount == 1 && !isRightClick) {
+                                    } else if (fingersCount == 1 && !event.buttons.isSecondaryPressed) {
                                         camera.angleX += dragAmount.x * 0.4f
-                                        camera.angleY = (camera.angleY - dragAmount.y * 0.4f).coerceIn(-85f, 85f)
+                                        camera.angleY =
+                                            (camera.angleY - dragAmount.y * 0.4f).coerceIn(
+                                                -85f,
+                                                85f
+                                            )
                                     }
                                     change.consume()
                                 }
@@ -203,7 +288,11 @@ fun Scene() {
                                 if (change != null) {
                                     val rawY = change.scrollDelta.y
                                     if (rawY != 0f) {
-                                        camera.scaleModifier = (camera.scaleModifier * kotlin.math.exp(-rawY * 0.05f)).coerceIn(0.3f, 5.0f)
+                                        camera.scaleModifier =
+                                            (camera.scaleModifier * kotlin.math.exp(-rawY * 0.05f)).coerceIn(
+                                                0.3f,
+                                                5.0f
+                                            )
                                         change.consume()
                                     }
                                 }
@@ -219,34 +308,79 @@ fun Scene() {
 
                 val baseScale = minOf(w, h) / 12f
 
-                // НАЛАШТУВАННЯ ОРІЄНТАЦІЇ: Інвертуємо третю компоненту (екранну глибину),
-                // щоб перекинути вісь Y на інший бік осі X (углиб сцени)
+                // --- 1. Малюємо базові координатні лінії (без змін) ---
                 val p0 = camera.project(Vector3(0f, 0f, 0f), w, h, baseScale)
-                val pX = camera.project(Vector3(2f, 0f, 0f), w, h, baseScale)  // Червона (Вправо)
-                val pY = camera.project(Vector3(0f, 0f, -2f), w, h, baseScale) // Зелена (Дзеркально назад - вглиб екрана)
-                val pZ = camera.project(Vector3(0f, 2f, 0f), w, h, baseScale)  // Синя (Вгору, не чіпаємо)
+                val pX = camera.project(Vector3(2f, 0f, 0f), w, h, baseScale)
+                val pY = camera.project(Vector3(0f, 0f, -2f), w, h, baseScale)
+                val pZ = camera.project(Vector3(0f, 2f, 0f), w, h, baseScale)
 
                 drawLine(Color.Red, p0, pX, strokeWidth = 4f)
                 drawLine(Color.Green, p0, pY, strokeWidth = 4f)
                 drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
 
+                // --- 2. МАТЕМАТИКА ПОВОРОТУ ДЛЯ РОЗРАХУНКУ СПРАВЖНЬОЇ ГЛИБИНИ ---
+
+                // ОБЧИСЛЕННЯ ЕКРАННИХ ПОЗИЦІЙ ТА СОРТУВАННЯ ЗА РЕАЛЬНИМ РОЗМІРОМ НА ЕКРАНІ
+                projectedFacesList.clear()
+                for (face in femBody.externalFaces) {
+                    val faceNodes = femBody.getNodesForFace(face.elementId, face.faceIndex)
+
+                    // Отримуємо 4 екранні точки кутів грані
+                    val screenPts = faceNodes.take(4).map { gId ->
+                        val mx = femBody.getX(gId).toFloat()
+                        val my = femBody.getY(gId).toFloat()
+                        val mz = femBody.getZ(gId).toFloat()
+                        camera.project(Vector3(mx, mz, -my), w, h, baseScale)
+                    }
+
+                    // Рахуємо сумарну довжину діагоналей чотирикутника на екрані (в пікселях)
+                    // Передня грань завжди матиме більші відстані між протилежними кутами, ніж задня!
+                    val diag1 = (screenPts[0] - screenPts[2]).getDistance()
+                    val diag2 = (screenPts[1] - screenPts[3]).getDistance()
+                    val screenSize = diag1 + diag2
+
+                    // Записуємо screenSize як "глибину". Чим більший екранний розмір — тим грань ближче до нас!
+                    projectedFacesList.add(ProjectedFace(face, screenPts, screenSize))
+                }
+
+// МАЛЮЄМО КОЛІРНЕ ПІДСВІЧУВАННЯ (Алгоритм художника)
+// Дальні грані (менші на екрані) малюємо ПЕРШИМИ, близькі (великі на екрані) — ОСТАННІМИ
+                val renderingOrder =
+                    projectedFacesList.sortedBy { it.averageDepth } // Від меншого розміру до більшого
+
+                for (projected in renderingOrder) {
+                    val isFixed = femBody.fixedFaces.contains(projected.face)
+                    val isLoaded = femBody.loadedFaces.contains(projected.face)
+
+                    if (isFixed || isLoaded) {
+                        val path = Path().apply {
+                            moveTo(projected.vertices[0].x, projected.vertices[0].y)
+                            lineTo(projected.vertices[1].x, projected.vertices[1].y)
+                            lineTo(projected.vertices[2].x, projected.vertices[2].y)
+                            lineTo(projected.vertices[3].x, projected.vertices[3].y)
+                            close()
+                        }
+                        drawPath(
+                            path = path,
+                            color = if (isFixed) Color.Gray.copy(alpha = 0.7f) else Color.Green.copy(
+                                alpha = 0.6f
+                            )
+                        )
+                    }
+                }
+
+                // --- 4. ВІДМАЛЬОВУВАННЯ СІТКИ (drawBody) ---
                 drawBody(femBody, camera, w, h, baseScale)
 
-                // Малюємо вузли з інверсією геометричної осі Y для відображення
+                // --- 5. ВУЗЛИ ТА ІНДЕКСИ ---
                 for (nodeId in 1..femBody.nqp) {
                     val mscX = femBody.getX(nodeId).toFloat()
                     val mscY = femBody.getY(nodeId).toFloat()
                     val mscZ = femBody.getZ(nodeId).toFloat()
 
-                    // Передаємо в камеру -mscY замість mscY, щоб розвернути вузли
-                    // відповідно до нового напрямку осі Y на кресленні ЛНУ
                     val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), w, h, baseScale)
 
-                    drawCircle(
-                        color = PureBlue,
-                        radius = 4.5f,
-                        center = screenPt
-                    )
+                    drawCircle(color = PureBlue, radius = 4.5f, center = screenPt)
 
                     if (showIndexes) {
                         drawText(
@@ -263,7 +397,7 @@ fun Scene() {
                 }
             }
 
-            // --- Права панель з легендою осей та чекбоксом ---
+            // --- Права панель ---
             Column(
                 modifier = Modifier.align(Alignment.TopEnd),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -281,25 +415,35 @@ fun Scene() {
                         style = TextStyle(fontSize = 11.sp, color = Color.Gray),
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
-                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.axis_x), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red)); Spacer(
+                        modifier = Modifier.width(6.dp)
+                    )
+                        Text(
+                            stringResource(Res.string.axis_x),
+                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                        )
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
-                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.axis_y), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green)); Spacer(
+                        modifier = Modifier.width(6.dp)
+                    )
+                        Text(
+                            stringResource(Res.string.axis_y),
+                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                        )
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
-                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(Res.string.axis_z), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue)); Spacer(
+                        modifier = Modifier.width(6.dp)
+                    )
+                        Text(
+                            stringResource(Res.string.axis_z),
+                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                        )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = 2.dp)
@@ -308,9 +452,16 @@ fun Scene() {
                         .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
                         .padding(8.dp)
                 ) {
-                    Checkbox(checked = showIndexes, onCheckedChange = { showIndexes = it }, modifier = Modifier.size(20.dp))
+                    Checkbox(
+                        checked = showIndexes,
+                        onCheckedChange = { showIndexes = it },
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text(stringResource(Res.string.show_indexes), style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily))
+                    Text(
+                        stringResource(Res.string.show_indexes),
+                        style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                    )
                 }
             }
         }
@@ -338,15 +489,12 @@ fun DrawScope.drawBody(
     }
 
     // Допоміжна функція для доступу до матриці NT з FEMBody
-    // Формула лінеаризації стовпчиків: nt[(localNode - 1) + (elementId - 1) * 20]
     fun getGlobalId(localNode: Int, elementId: Int): Int {
         val index = (localNode - 1) + (elementId - 1) * 20
         return body.nt[index]
     }
 
     // Шаблон пар локальних вузлів (звідки-куди), що утворюють лінії ребер через середини.
-    // Кожна пара — це відрізок: (локальний_вузол_А до локального_вузла_Б).
-    // Прописуємо всі 24 половинки ребер шестигранника згідно з Рис. 2
     val localEdges = listOf(
         // 1. Нижня основа (Ребра проходять через середини 9, 10, 11, 12)
         1 to 9, 9 to 2,
@@ -370,17 +518,47 @@ fun DrawScope.drawBody(
     // Проходимо циклом по кожному скінченному елементу системи
     for (e in 1..body.nel) {
         for ((localFrom, localTo) in localEdges) {
-            // Переводимо місцеві номери кубика у загальносистемні ID вузлів
             val globalFrom = getGlobalId(localFrom, e)
             val globalTo = getGlobalId(localTo, e)
 
             // Проєктуємо та малюємо відрізок ребра
             drawLine(
-                color = Color.DarkGray.copy(alpha = 0.7f), // Робимо внутрішні лінії трохи м'якшими
+                color = Color.DarkGray.copy(alpha = 0.7f), // Внутрішні лінії робимо м'якшими
                 start = getScreenPos(globalFrom),
                 end = getScreenPos(globalTo),
                 strokeWidth = 1.5f
             )
         }
     }
+}
+
+// ГЕОМЕТРИЧНИЙ ФІЛЬТР: Перевірка, чи потрапила точка кліку всередину 2D полігона грані елемента
+// ОНОВЛЕНЙ ФІЛЬТР КЛІКІВ: Тепер враховує СПРАВЖНЮ екранну глибину
+// ОНОВЛЕНИЙ ФІЛЬТР КЛІКІВ: Перевіряє спочатку найбільші за розміром (найближчі) грані
+fun findClickedFace(click: Offset, projectedFaces: List<ProjectedFace>): ElementFace? {
+    // Сортуємо від найбільшого екранного розміру до найменшого (ближчі попереду)
+    val sortedFaces = projectedFaces.sortedByDescending { it.averageDepth }
+
+    for (projected in sortedFaces) {
+        if (projected.vertices.size < 4) continue
+        if (isPointInPolygon(click, projected.vertices)) {
+            return projected.face // Клік залізно ловить передню стінку
+        }
+    }
+    return null
+}
+
+// Алгоритм трасування променя (Ray-casting) для опуклого чотирикутника грані
+fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
+    var inside = false
+    var j = poly.size - 1
+    for (i in poly.indices) {
+        if ((poly[i].y > p.y) != (poly[j].y > p.y) &&
+            (p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x)
+        ) {
+            inside = !inside
+        }
+        j = i
+    }
+    return inside
 }

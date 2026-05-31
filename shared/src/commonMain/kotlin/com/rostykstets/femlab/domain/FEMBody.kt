@@ -1,30 +1,41 @@
 package com.rostykstets.femlab.domain
 
+import androidx.compose.runtime.mutableStateListOf
 import com.rostykstets.femlab.ui.Vector3
 import com.rostykstets.femlab.ui.product
 
 class FEMBody {
-
     var nel: Int = 0
     var nqp: Int = 0
     var ng: Int = 0
 
+    // Динамічні лічильники крайових умов
+    var nzu: Int = 0
+    var nep: Int = 0
+
     lateinit var akt: DoubleArray
     lateinit var nt: IntArray
 
+    // Головні структури крайових умов
+    var zu: IntArray = IntArray(0)
+    var zp: DoubleArray = DoubleArray(0) // Лінеаризований масив [elementId, faceIdx, pressure, ...]
+
+    // Інтерактивні набори вибраних граней (щоб уникнути дублікатів)
+    val fixedFaces = mutableStateListOf<ElementFace>() // Грані, закріплені користувачем (Сірі)
+    val loadedFaces = mutableStateListOf<ElementFace>() // Грані під тиском (Зелені)
+
+    val externalFaces = mutableSetOf<ElementFace>()
+
     fun buildElements(bodySize: Vector3, splits: Vector3) {
         nel = splits.product()
-
         val ax = bodySize.x.toInt()
         val ay = bodySize.y.toInt()
         val az = bodySize.z.toInt()
-
         val nx = splits.x.toInt()
         val ny = splits.y.toInt()
         val nz = splits.z.toInt()
 
         nqp = calculateNqp(nx, ny, nz)
-
         akt = DoubleArray(3 * nqp)
         nt = IntArray(20 * nel)
 
@@ -35,20 +46,17 @@ class FEMBody {
         val map = Array(2 * nx + 1) { Array(2 * ny + 1) { IntArray(2 * nz + 1) { 0 } } }
         var nodeCounter = 0
 
-        // КРОК 1: Заповнення АКТ та побудова карти індексів map (без змін)
         for (i in 0..(2 * nz)) {
             for (y in 0..(2 * ny)) {
                 for (k in 0..(2 * nx)) {
                     val xEven = (k % 2 == 0)
                     val yEven = (y % 2 == 0)
                     val zEven = (i % 2 == 0)
-
                     val isValidNode = (xEven && yEven) || (xEven && zEven) || (yEven && zEven)
 
                     if (isValidNode) {
                         nodeCounter++
                         map[k][y][i] = nodeCounter
-
                         val base = (nodeCounter - 1) * 3
                         akt[base + 0] = k * (hx / 2.0)
                         akt[base + 1] = y * (hy / 2.0)
@@ -58,62 +66,119 @@ class FEMBody {
             }
         }
 
-        // КРОК 2: Генерація NT — Варіант "ЗА МЕТОДИЧКОЮ" (Строга відповідність Рис. 2)
         var elementId = 1
         for (ez in 0..<nz) {
             for (ey in 0..<ny) {
                 for (ex in 0..<nx) {
-
                     val cx = ex * 2
                     val cy = ey * 2
                     val cz = ez * 2
-
-                    // Масив локальних відповідностей для поточного елемента (розмір 20)
                     val localNodes = IntArray(20)
 
-                    // 1. Кутові вузли основи (1..4)
-                    localNodes[0] = map[cx][cy][cz]          // Вузол 1
-                    localNodes[1] = map[cx + 2][cy][cz]      // Вузол 2
-                    localNodes[2] = map[cx + 2][cy + 2][cz]  // Вузол 3
-                    localNodes[3] = map[cx][cy + 2][cz]      // Вузол 4
+                    localNodes[0] = map[cx][cy][cz]
+                    localNodes[1] = map[cx + 2][cy][cz]
+                    localNodes[2] = map[cx + 2][cy + 2][cz]
+                    localNodes[3] = map[cx][cy + 2][cz]
+                    localNodes[4] = map[cx][cy][cz + 2]
+                    localNodes[5] = map[cx + 2][cy][cz + 2]
+                    localNodes[6] = map[cx + 2][cy + 2][cz + 2]
+                    localNodes[7] = map[cx][cy + 2][cz + 2]
+                    localNodes[8] = map[cx + 1][cy][cz]
+                    localNodes[9] = map[cx + 2][cy + 1][cz]
+                    localNodes[10] = map[cx + 1][cy + 2][cz]
+                    localNodes[11] = map[cx][cy + 1][cz]
+                    localNodes[12] = map[cx][cy][cz + 1]
+                    localNodes[13] = map[cx + 2][cy][cz + 1]
+                    localNodes[14] = map[cx + 2][cy + 2][cz + 1]
+                    localNodes[15] = map[cx][cy + 2][cz + 1]
+                    localNodes[16] = map[cx + 1][cy][cz + 2]
+                    localNodes[17] = map[cx + 2][cy + 1][cz + 2]
+                    localNodes[18] = map[cx + 1][cy + 2][cz + 2]
+                    localNodes[19] = map[cx][cy + 1][cz + 2]
 
-                    // 2. Кутові вузли верхньої кришки (5..8)
-                    localNodes[4] = map[cx][cy][cz + 2]      // Вузол 5
-                    localNodes[5] = map[cx + 2][cy][cz + 2]  // Вузол 6
-                    localNodes[6] = map[cx + 2][cy + 2][cz + 2] // Вузол 7
-                    localNodes[7] = map[cx][cy + 2][cz + 2]  // Вузол 8
-
-                    // 3. Середини ребер нижньої основи (9..12)
-                    localNodes[8] = map[cx + 1][cy][cz]      // Вузол 9
-                    localNodes[9] = map[cx + 2][cy + 1][cz]  // Вузол 10
-                    localNodes[10] = map[cx + 1][cy + 2][cz] // Вузол 11
-                    localNodes[11] = map[cx][cy + 1][cz]     // Вузол 12
-
-                    // 4. Середини вертикальних ребер (13..16)
-                    localNodes[12] = map[cx][cy][cz + 1]     // Вузол 13
-                    localNodes[13] = map[cx + 2][cy][cz + 1] // Вузол 14
-                    localNodes[14] = map[cx + 2][cy + 2][cz + 1] // Вузол 15
-                    localNodes[15] = map[cx][cy + 2][cz + 1] // Вузол 16
-
-                    // 5. Середини ребер верхньої кришки (17..20)
-                    localNodes[16] = map[cx + 1][cy][cz + 2] // Вузол 17
-                    localNodes[17] = map[cx + 2][cy + 1][cz + 2] // Вузол 18
-                    localNodes[18] = map[cx + 1][cy + 2][cz + 2] // Вузол 19
-                    localNodes[19] = map[cx][cy + 1][cz + 2] // Вузол 20
-
-                    // Переносимо сформовані 20 вузлів у глобальний одновимірний масив NT
                     for (localNode in 1..20) {
-                        val ntIndex = (localNode - 1) + (elementId - 1) * 20
-                        nt[ntIndex] = localNodes[localNode - 1]
+                        nt[(localNode - 1) + (elementId - 1) * 20] = localNodes[localNode - 1]
                     }
-
                     elementId++
                 }
             }
         }
-
-        // КРОК 3: Обчислення півширини стрічки ng (без змін)
         ng = calculateNg()
+
+        // Очищуємо старі вибори при зміні розмірів сітки
+        fixedFaces.clear()
+        loadedFaces.clear()
+
+        findExternalFaces()
+
+        updateBoundaryArrays(0.0)
+    }
+
+    // Метод, який фільтрує грані, залишаючи лише унікальні зовнішні поверхні
+    private fun findExternalFaces() {
+        externalFaces.clear()
+
+        // Тимчасова мапа, де ключ — це відсортований набір з 8 глобальних вузлів грані,
+        // а значення — список елементів, яким ця грань належить
+        val faceSharingMap = mutableMapOf<List<Int>, MutableList<ElementFace>>()
+
+        for (e in 1..nel) {
+            for (fIdx in 1..6) {
+                // Отримуємо 8 глобальних вузлів для поточної грані
+                val nodes = getNodesForFace(e, fIdx)
+                // Сортуємо список вузлів, щоб однакові грані у різних елементів мали ідентичний ключ
+                val sortedKey = nodes.sorted()
+
+                if (!faceSharingMap.containsKey(sortedKey)) {
+                    faceSharingMap[sortedKey] = mutableListOf()
+                }
+                faceSharingMap[sortedKey]?.add(ElementFace(e, fIdx))
+            }
+        }
+
+        // Критерій граничної (зовнішньої) грані: вона належить лише ОДНОМУ скінченному елементу
+        for ((_, sharingElements) in faceSharingMap) {
+            if (sharingElements.size == 1) {
+                externalFaces.add(sharingElements[0])
+            }
+        }
+    }
+
+    // МАТЕМАТИЧНЕ ОБЧИСЛЕННЯ ЗНАЧЕНЬ nzu, nep ТА ФОРМУВАННЯ КІНЦЕВИХ МАСИВІВ ZU / ZP
+    fun updateBoundaryArrays(currentPressure: Double) {
+        // 1. Обчислення для Закріплень (ZU)
+        val uniqueNodes = mutableSetOf<Int>()
+        for (face in fixedFaces) {
+            val faceNodes = getNodesForFace(face.elementId, face.faceIndex)
+            // Додаємо всі 8 вузлів цієї грані в Set (автоматично прибирає дублікати на стиках)
+            uniqueNodes.addAll(faceNodes.toTypedArray())
+        }
+        nzu = uniqueNodes.size
+        zu = uniqueNodes.sorted().toIntArray() // Масив ZU готовий
+
+        // 2. Обчислення для Навантажень (ZP)
+        nep = loadedFaces.size
+        zp = DoubleArray(nep * 3)
+        loadedFaces.forEachIndexed { idx, face ->
+            val base = idx * 3
+            zp[base + 0] = face.elementId.toDouble()
+            zp[base + 1] = face.faceIndex.toDouble()
+            zp[base + 2] = currentPressure
+        }
+    }
+
+    // Повертає список із 8 локальних вузлів, що утворюють конкретну грань елемента (згідно з Рис. 2)
+    fun getNodesForFace(elementId: Int, faceIndex: Int): List<Int> {
+        val localIndices = when (faceIndex) {
+            1 -> listOf(1, 4, 3, 2, 12, 11, 10, 9)       // Нижня грань (z = min)
+            2 -> listOf(5, 6, 7, 8, 17, 18, 19, 20)      // Верхня грань (z = max)
+            3 -> listOf(1, 2, 6, 5, 9, 14, 17, 13)       // Передня грань (y = min)
+            4 -> listOf(2, 3, 7, 6, 10, 15, 18, 14)      // Права бічна (x = max)
+            5 -> listOf(3, 4, 8, 7, 11, 16, 19, 15)      // Задня грань (y = max)
+            6 -> listOf(4, 1, 5, 8, 12, 13, 20, 16)      // Ліва бічна (x = min)
+            else -> emptyList()
+        }
+        return localIndices.map { getGlobalNodeId(it, elementId) }
     }
 
     private fun calculateNg(): Int {
@@ -127,9 +192,7 @@ class FEMBody {
                 if (globalId > maxNode) maxNode = globalId
             }
             val diff = maxNode - minNode + 1
-            if (diff > maxDiff) {
-                maxDiff = diff
-            }
+            if (diff > maxDiff) maxDiff = diff
         }
         return 3 * maxDiff
     }
@@ -150,9 +213,7 @@ class FEMBody {
         return nodeCounter
     }
 
-    // Замість математичного запису NT[localNode, elementId]
     fun getGlobalNodeId(localNode: Int, elementId: Int): Int {
-        // Формула лінеаризації двовимірної матриці (стовпчиковий варіант):
         return nt[(localNode - 1) + (elementId - 1) * 20]
     }
 
