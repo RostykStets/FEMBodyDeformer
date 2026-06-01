@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,11 +18,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,41 +72,41 @@ import femlab.shared.generated.resources.splits
 import femlab.shared.generated.resources.young_module
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun Scene() {
-    var bodySize by remember { mutableStateOf(Vector3(4f, 4f, 4f)) }
-    var bodySplits by remember { mutableStateOf(Vector3(2f, 1f, 2f)) }
 
-    var sizeXText by remember { mutableStateOf("4") }
-    var sizeYText by remember { mutableStateOf("4") }
-    var sizeZText by remember { mutableStateOf("4") }
+    val viewModel: FEMViewModel = koinViewModel()
 
-    var splitXText by remember { mutableStateOf("2") }
-    var splitYText by remember { mutableStateOf("1") }
-    var splitZText by remember { mutableStateOf("2") }
+    // Зчитуємо стани з ViewModel
+    val bodySize by viewModel.bodySize.collectAsState()
+    val bodySplits by viewModel.bodySplits.collectAsState()
 
-    var youngModule by remember { mutableStateOf("4") }
-    var poissonRatio by remember { mutableStateOf("4") }
-    var pressure by remember { mutableStateOf("4") }
+    val youngModule by viewModel.youngModule.collectAsState()
+    val poissonRatio by viewModel.poissonRatio.collectAsState()
+    val pressure by viewModel.pressure.collectAsState()
 
-    val femBody = remember(bodySize, bodySplits) {
-        FEMBody().apply { buildElements(bodySize, bodySplits) }
-    }
+    val deformedBody by viewModel.deformedBody.collectAsState()
+    val isCalculating by viewModel.isCalculating.collectAsState()
 
-    // Синхронізація лінійного тиску з масивом ZP при зміні тексту
-    LaunchedEffect(pressure) {
-        femBody.updateBoundaryArrays(pressure.toDoubleOrNull() ?: 0.0)
-    }
+    // 2. Локальні рядкові стани для текстових полів (щоб не блокувати ввід дробових чисел типу "4.")
+    var sizeXText by remember(bodySize.x) { mutableStateOf(bodySize.x.toString()) }
+    var sizeYText by remember(bodySize.y) { mutableStateOf(bodySize.y.toString()) }
+    var sizeZText by remember(bodySize.z) { mutableStateOf(bodySize.z.toString()) }
+
+    var splitXText by remember(bodySplits.x) { mutableStateOf(bodySplits.x.toInt().toString()) }
+    var splitYText by remember(bodySplits.y) { mutableStateOf(bodySplits.y.toInt().toString()) }
+    var splitZText by remember(bodySplits.z) { mutableStateOf(bodySplits.z.toInt().toString()) }
 
     val camera = remember { SimpleCamera() }
     val textMeasurer = rememberTextMeasurer()
     val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
     var showIndexes by remember { mutableStateOf(false) }
 
-
     Row(modifier = Modifier.fillMaxSize()) {
-        // --- Ліва панель налаштувань ---
+
+        // --- ЛІВА ПАНЕЛЬ НАЛАШТУВАНЬ ---
         Column(
             modifier = Modifier
                 .width(180.dp)
@@ -119,26 +122,32 @@ fun Scene() {
             OutlinedTextField(
                 value = sizeXText,
                 onValueChange = {
-                    sizeXText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(x = v) }
+                    sizeXText = it; it.toFloatOrNull()
+                    ?.let { v -> viewModel.updateSize(bodySize.copy(x = v)) }
                 },
                 label = { Text(stringResource(Res.string.size_x)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
             OutlinedTextField(
                 value = sizeYText,
                 onValueChange = {
-                    sizeYText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(y = v) }
+                    sizeYText = it; it.toFloatOrNull()
+                    ?.let { v -> viewModel.updateSize(bodySize.copy(y = v)) }
                 },
                 label = { Text(stringResource(Res.string.size_y)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
             OutlinedTextField(
                 value = sizeZText,
                 onValueChange = {
-                    sizeZText = it; it.toFloatOrNull()?.let { v -> bodySize = bodySize.copy(z = v) }
+                    sizeZText = it; it.toFloatOrNull()
+                    ?.let { v -> viewModel.updateSize(bodySize.copy(z = v)) }
                 },
                 label = { Text(stringResource(Res.string.size_z)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -150,28 +159,42 @@ fun Scene() {
                 value = splitXText,
                 onValueChange = {
                     splitXText = it; it.toFloatOrNull()
-                    ?.let { v -> bodySplits = bodySplits.copy(x = v) }
+                    ?.let { v -> viewModel.updateSplits(bodySplits.copy(x = v)) }
                 },
                 label = { Text(stringResource(Res.string.split_x)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
             OutlinedTextField(
                 value = splitYText,
                 onValueChange = {
                     splitYText = it; it.toFloatOrNull()
-                    ?.let { v -> bodySplits = bodySplits.copy(y = v) }
+                    ?.let { v -> viewModel.updateSplits(bodySplits.copy(y = v)) }
                 },
                 label = { Text(stringResource(Res.string.split_y)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
             OutlinedTextField(
                 value = splitZText,
                 onValueChange = {
                     splitZText = it; it.toFloatOrNull()
-                    ?.let { v -> bodySplits = bodySplits.copy(z = v) }
+                    ?.let { v -> viewModel.updateSplits(bodySplits.copy(z = v)) }
                 },
                 label = { Text(stringResource(Res.string.split_z)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Дані МСЕ:", modifier = Modifier.padding(bottom = 2.dp))
+            Text(
+                text = "nzu (закріплено): ${viewModel.femBody.nzu}",
+                style = TextStyle(fontSize = 11.sp, color = Color.DarkGray)
+            )
+            Text(
+                text = "nep (навантажено): ${viewModel.femBody.nep}",
+                style = TextStyle(fontSize = 11.sp, color = Color.DarkGray)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,25 +204,40 @@ fun Scene() {
             )
             OutlinedTextField(
                 value = youngModule,
-                onValueChange = { youngModule = it },
+                onValueChange = { viewModel.updateYoungModule(it) },
                 label = { Text(stringResource(Res.string.young_module)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
             OutlinedTextField(
                 value = poissonRatio,
-                onValueChange = { poissonRatio = it },
+                onValueChange = { viewModel.updatePoissonRatio(it) },
                 label = { Text(stringResource(Res.string.poisson_ratio)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
             OutlinedTextField(
                 value = pressure,
-                onValueChange = { pressure = it },
+                onValueChange = { viewModel.updatePressure(it) },
                 label = { Text(stringResource(Res.string.pressure)) },
-                singleLine = true
+                singleLine = true,
+                enabled = !isCalculating
             )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // КНОПКА ЗАПУСКУ ОБЧИСЛЕНЬ СЛАР (Крок 5)
+            Button(
+                onClick = { viewModel.calculate() },
+                enabled = !isCalculating,
+                modifier = Modifier.fillMaxWidth().height(42.dp),
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Text(text = if (isCalculating) "Рахую..." else "Обчислити", fontSize = 13.sp)
+            }
         }
 
-        // --- Область 3D Рендерингу з виправленим Z-буфером ---
+        // --- ОБЛАСТЬ 3D РЕНДЕРИНГУ З КЛІКАМИ ТА ОПТИМІЗОВАНИМ Z-БУФЕРОМ ---
         val projectedFacesList = remember { mutableStateListOf<ProjectedFace>() }
 
         Box(
@@ -210,33 +248,19 @@ fun Scene() {
                 .pointerInput(bodySize, bodySplits) {
                     detectTapGestures(
                         onTap = { clickOffset ->
-                            // Передаємо список із розрахованою глибиною
-                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                            if (clickedFace != null) {
-                                if (femBody.fixedFaces.contains(clickedFace)) {
-                                    femBody.fixedFaces.remove(clickedFace)
-                                } else {
-                                    femBody.fixedFaces.add(clickedFace)
-                                    femBody.loadedFaces.remove(clickedFace)
-                                }
-                                femBody.updateBoundaryArrays(pressure.toDoubleOrNull() ?: 0.0)
+                            if (!isCalculating) {
+                                val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+                                if (clickedFace != null) viewModel.toggleFaceFixed(clickedFace)
                             }
                         },
                         onLongPress = { clickOffset ->
-                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                            if (clickedFace != null) {
-                                if (femBody.loadedFaces.contains(clickedFace)) {
-                                    femBody.loadedFaces.remove(clickedFace)
-                                } else {
-                                    femBody.loadedFaces.add(clickedFace)
-                                    femBody.fixedFaces.remove(clickedFace)
-                                }
-                                femBody.updateBoundaryArrays(pressure.toDoubleOrNull() ?: 0.0)
+                            if (!isCalculating) {
+                                val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+                                if (clickedFace != null) viewModel.toggleFaceLoaded(clickedFace)
                             }
                         }
                     )
                 }
-                // Твоя рідна обробка камери (залишається без змін)
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
@@ -244,7 +268,8 @@ fun Scene() {
                             val fingersCount = event.changes.size
                             if (event.type == PointerEventType.Move) {
                                 val change = event.changes.firstOrNull()
-                                if (change != null) {
+                                //if (change != null) {
+                                if (change != null && !isCalculating) {
                                     val dragAmount = change.position - change.previousPosition
                                     if (event.buttons.isSecondaryPressed || fingersCount >= 3) {
                                         camera.targetOffsetX += dragAmount.x
@@ -283,7 +308,8 @@ fun Scene() {
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
-                            if (event.type == PointerEventType.Scroll) {
+                            //if (event.type == PointerEventType.Scroll) {
+                            if (event.type == PointerEventType.Scroll && !isCalculating) {
                                 val change = event.changes.firstOrNull()
                                 if (change != null) {
                                     val rawY = change.scrollDelta.y
@@ -301,6 +327,13 @@ fun Scene() {
                     }
                 }
         ) {
+
+            if (isCalculating)
+                CircularProgressIndicator(
+                    color = Color.Yellow,
+                    modifier = Modifier.size(30.dp).align(alignment = Alignment.Center)
+                )
+
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val w = size.width
                 val h = size.height
@@ -308,7 +341,7 @@ fun Scene() {
 
                 val baseScale = minOf(w, h) / 12f
 
-                // --- 1. Малюємо базові координатні лінії (без змін) ---
+                // Малюємо базові координатні лінії ЛНУ
                 val p0 = camera.project(Vector3(0f, 0f, 0f), w, h, baseScale)
                 val pX = camera.project(Vector3(2f, 0f, 0f), w, h, baseScale)
                 val pY = camera.project(Vector3(0f, 0f, -2f), w, h, baseScale)
@@ -318,39 +351,27 @@ fun Scene() {
                 drawLine(Color.Green, p0, pY, strokeWidth = 4f)
                 drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
 
-                // --- 2. МАТЕМАТИКА ПОВОРОТУ ДЛЯ РОЗРАХУНКУ СПРАВЖНЬОЇ ГЛИБИНИ ---
-
-                // ОБЧИСЛЕННЯ ЕКРАННИХ ПОЗИЦІЙ ТА СОРТУВАННЯ ЗА РЕАЛЬНИМ РОЗМІРОМ НА ЕКРАНІ
+                // ОБЧИСЛЕННЯ ЕКРАННИХ ПОЗИЦІЙ ЗОВНІШНІХ ГРАНЕЙ ТА ЇХНЬОГО МАСШТАБУ (Z-ГЛИБИНА)
                 projectedFacesList.clear()
-                for (face in femBody.externalFaces) {
-                    val faceNodes = femBody.getNodesForFace(face.elementId, face.faceIndex)
-
-                    // Отримуємо 4 екранні точки кутів грані
+                for (face in viewModel.femBody.externalFaces) {
+                    val faceNodes =
+                        viewModel.femBody.getNodesForFace(face.elementId, face.faceIndex)
                     val screenPts = faceNodes.take(4).map { gId ->
-                        val mx = femBody.getX(gId).toFloat()
-                        val my = femBody.getY(gId).toFloat()
-                        val mz = femBody.getZ(gId).toFloat()
+                        val mx = viewModel.femBody.getX(gId).toFloat()
+                        val my = viewModel.femBody.getY(gId).toFloat()
+                        val mz = viewModel.femBody.getZ(gId).toFloat()
                         camera.project(Vector3(mx, mz, -my), w, h, baseScale)
                     }
-
-                    // Рахуємо сумарну довжину діагоналей чотирикутника на екрані (в пікселях)
-                    // Передня грань завжди матиме більші відстані між протилежними кутами, ніж задня!
                     val diag1 = (screenPts[0] - screenPts[2]).getDistance()
                     val diag2 = (screenPts[1] - screenPts[3]).getDistance()
-                    val screenSize = diag1 + diag2
-
-                    // Записуємо screenSize як "глибину". Чим більший екранний розмір — тим грань ближче до нас!
-                    projectedFacesList.add(ProjectedFace(face, screenPts, screenSize))
+                    projectedFacesList.add(ProjectedFace(face, screenPts, diag1 + diag2))
                 }
 
-// МАЛЮЄМО КОЛІРНЕ ПІДСВІЧУВАННЯ (Алгоритм художника)
-// Дальні грані (менші на екрані) малюємо ПЕРШИМИ, близькі (великі на екрані) — ОСТАННІМИ
-                val renderingOrder =
-                    projectedFacesList.sortedBy { it.averageDepth } // Від меншого розміру до більшого
-
+                // МАЛЮЄМО КОЛІРНЕ ПІДСВІЧУВАННЯ ГРАНЕЙ (Алгоритм художника від дальніх до близьких)
+                val renderingOrder = projectedFacesList.sortedBy { it.averageDepth }
                 for (projected in renderingOrder) {
-                    val isFixed = femBody.fixedFaces.contains(projected.face)
-                    val isLoaded = femBody.loadedFaces.contains(projected.face)
+                    val isFixed = viewModel.femBody.fixedFaces.contains(projected.face)
+                    val isLoaded = viewModel.femBody.loadedFaces.contains(projected.face)
 
                     if (isFixed || isLoaded) {
                         val path = Path().apply {
@@ -369,14 +390,35 @@ fun Scene() {
                     }
                 }
 
-                // --- 4. ВІДМАЛЬОВУВАННЯ СІТКИ (drawBody) ---
-                drawBody(femBody, camera, w, h, baseScale)
+                // 1. ВІДМАЛЬОВУВАННЯ ПОЧАТКОВОЇ СІТКИ (Темно-сіра каркасна конструкція)
+                drawBody(
+                    viewModel.femBody,
+                    camera,
+                    w,
+                    h,
+                    baseScale,
+                    isDeformed = false,
+                    deformedCoords = null
+                )
 
-                // --- 5. ВУЗЛИ ТА ІНДЕКСИ ---
-                for (nodeId in 1..femBody.nqp) {
-                    val mscX = femBody.getX(nodeId).toFloat()
-                    val mscY = femBody.getY(nodeId).toFloat()
-                    val mscZ = femBody.getZ(nodeId).toFloat()
+                // 2. ВІДМАЛЬОВУВАННЯ ДЕФОРМОВАНОЇ СІТКИ (Червона конструкція — з'являється після solve())
+                if (deformedBody != null) {
+                    drawBody(
+                        viewModel.femBody,
+                        camera,
+                        w,
+                        h,
+                        baseScale,
+                        isDeformed = true,
+                        deformedCoords = deformedBody
+                    )
+                }
+
+                // 3. РЕНДЕР ВУЗЛІВ ТА ЇХНІХ ГЛОБАЛЬНИХ ІНДЕКСІВ
+                for (nodeId in 1..viewModel.femBody.nqp) {
+                    val mscX = viewModel.femBody.getX(nodeId).toFloat()
+                    val mscY = viewModel.femBody.getY(nodeId).toFloat()
+                    val mscZ = viewModel.femBody.getZ(nodeId).toFloat()
 
                     val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), w, h, baseScale)
 
@@ -397,7 +439,7 @@ fun Scene() {
                 }
             }
 
-            // --- Права панель ---
+            // --- ПРАВА ПАНЕЛЬ З ЛЕГЕНДОЮ ---
             Column(
                 modifier = Modifier.align(Alignment.TopEnd),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -477,56 +519,73 @@ fun DrawScope.drawBody(
     camera: SimpleCamera,
     w: Float,
     h: Float,
-    baseScale: Float
+    baseScale: Float,
+    isDeformed: Boolean,
+    deformedCoords: DoubleArray?
 ) {
-    // Допоміжна inline-функція для отримання екранної точки за ГЛОБАЛЬНИМ номером вузла
+    // Внутрішня функція для динамічного проектування точок на екрані
     fun getScreenPos(globalNodeId: Int): Offset {
-        val mx = body.getX(globalNodeId).toFloat()
-        val my = body.getY(globalNodeId).toFloat()
-        val mz = body.getZ(globalNodeId).toFloat()
-        // Інверсія МСЕ-осей під камеру: (X, Z, -Y)
+        val base = (globalNodeId - 1) * 3
+
+        // Визначаємо, з якого масиву брати координати (оригінального AKT чи деформованого)
+        val mx =
+            if (isDeformed && deformedCoords != null) deformedCoords[base + 0].toFloat() else body.getX(
+                globalNodeId
+            ).toFloat()
+        val my =
+            if (isDeformed && deformedCoords != null) deformedCoords[base + 1].toFloat() else body.getY(
+                globalNodeId
+            ).toFloat()
+        val mz =
+            if (isDeformed && deformedCoords != null) deformedCoords[base + 2].toFloat() else body.getZ(
+                globalNodeId
+            ).toFloat()
+
+        // Інверсія геометричних осей під простір камери
         return camera.project(Vector3(mx, mz, -my), w, h, baseScale)
     }
 
-    // Допоміжна функція для доступу до матриці NT з FEMBody
     fun getGlobalId(localNode: Int, elementId: Int): Int {
-        val index = (localNode - 1) + (elementId - 1) * 20
-        return body.nt[index]
+        return body.nt[(localNode - 1) + (elementId - 1) * 20]
     }
 
-    // Шаблон пар локальних вузлів (звідки-куди), що утворюють лінії ребер через середини.
+    // Налаштування стилю ліній: деформований стан малюється Червоним та жирнішим
+    val lineColor =
+        if (isDeformed) Color.Red.copy(alpha = 0.85f) else Color.DarkGray.copy(alpha = 0.6f)
+    val stroke = if (isDeformed) 2.2f else 1.5f
+
+    // Шаблон пар локальних вузлів куба для побудови ребер через серединні точки (Рис. 2)
     val localEdges = listOf(
-        // 1. Нижня основа (Ребра проходять через середини 9, 10, 11, 12)
+        // 1. Нижня основа
         1 to 9, 9 to 2,
         2 to 10, 10 to 3,
         3 to 11, 11 to 4,
         4 to 12, 12 to 1,
 
-        // 2. Вертикальні стійки (Ребра проходять через середини 13, 14, 15, 16)
+        // 2. Вертикальні стійки
         1 to 13, 13 to 5,
         2 to 14, 14 to 6,
         3 to 15, 15 to 7,
         4 to 16, 16 to 8,
 
-        // 3. Верхній дах (Ребра проходять через середини 17, 18, 19, 20)
+        // 3. Верхня кришка
         5 to 17, 17 to 6,
         6 to 18, 18 to 7,
         7 to 19, 19 to 8,
         8 to 20, 20 to 5
     )
 
-    // Проходимо циклом по кожному скінченному елементу системи
+    // Рендеринг каркасу конструкції
     for (e in 1..body.nel) {
         for ((localFrom, localTo) in localEdges) {
             val globalFrom = getGlobalId(localFrom, e)
             val globalTo = getGlobalId(localTo, e)
 
-            // Проєктуємо та малюємо відрізок ребра
             drawLine(
-                color = Color.DarkGray.copy(alpha = 0.7f), // Внутрішні лінії робимо м'якшими
+                color = lineColor,
                 start = getScreenPos(globalFrom),
                 end = getScreenPos(globalTo),
-                strokeWidth = 1.5f
+                strokeWidth = stroke
             )
         }
     }
