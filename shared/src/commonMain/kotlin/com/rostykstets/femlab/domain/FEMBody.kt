@@ -412,7 +412,97 @@ class FEMBody {
         }
     }
 
-    fun solve(e: Double, v: Double, pressure: Double) {
+    /**
+     * Оптимізоване множення симетричної стрічкової матриці на вектор: result = A * x.
+     * Завдяки симетрії, ми розвертаємо верхню трикутну частину стрічки і "віддзеркалюємо" її вниз.
+     */
+    private fun multiplyBandMatrix(matrix: Array<DoubleArray>, x: DoubleArray, result: DoubleArray) {
+        val n = x.size
+        // Очищаємо результуючий вектор
+        for (i in 0 until n) {
+            result[i] = 0.0
+        }
+
+        for (i in 0 until n) {
+            // Множення на елемент головної діагоналі
+            result[i] += matrix[i][0] * x[i]
+
+            // Множення на недіагональні елементи
+            for (j in 1 until ng) {
+                val col = i + j
+                if (col < n) {
+                    // Внесок верхнього трикутника матриці
+                    result[i] += matrix[i][j] * x[col]
+                    // Внесок нижнього трикутника (завдяки симетрії A[i][col] == A[col][i])
+                    result[col] += matrix[i][j] * x[i]
+                }
+            }
+        }
+    }
+
+    /**
+     * Крок 5: Розв'язання СЛАР Методом Спряжених Градієнтів (CG).
+     * @return Вектор деформацій u.
+     */
+    private fun solveConjugateGradient(): DoubleArray {
+        val n = fVec.size
+        val u = DoubleArray(n) { 0.0 }     // Початкове наближення (переміщення = 0)
+        val r = fVec.copyOf()              // Початкова нев'язка (дорівнює силам, бо u=0)
+        val p = r.copyOf()                 // Початковий напрямок
+        val Ap = DoubleArray(n)            // Допоміжний вектор для множення матриці на напрямок
+
+        var rsold = 0.0
+        for (i in 0 until n) {
+            rsold += r[i] * r[i]
+        }
+
+        val maxIter = 10000 // Запобіжник від нескінченного циклу
+        val epsilon = 1e-8  // Точність розв'язку
+
+        for (iter in 0 until maxIter) {
+            // Ap = A * p
+            multiplyBandMatrix(mg, p, Ap)
+
+            var pAp = 0.0
+            for (i in 0 until n) {
+                pAp += p[i] * Ap[i]
+            }
+
+            // Обчислення розміру кроку alpha
+            val alpha = rsold / pAp
+
+            // Оновлення вектора переміщень u та вектора нев'язки r
+            for (i in 0 until n) {
+                u[i] += alpha * p[i]
+                r[i] -= alpha * Ap[i]
+            }
+
+            var rsnew = 0.0
+            for (i in 0 until n) {
+                rsnew += r[i] * r[i]
+            }
+
+            // Умова виходу: якщо похибка стала мізерною, рівняння розв'язано!
+            if (kotlin.math.sqrt(rsnew) < epsilon) {
+                break
+            }
+
+            // Оновлення напрямку для наступної ітерації
+            val beta = rsnew / rsold
+            for (i in 0 until n) {
+                p[i] = r[i] + beta * p[i]
+            }
+            rsold = rsnew
+        }
+
+        return u
+    }
+
+    /**
+     * Головна обчислювальна функція.
+     * @return DoubleArray - Нові (деформовані) координати вузлів сітки для рендеру.
+     */
+    fun solve(e: Double, v: Double, pressure: Double): DoubleArray {
         // 1. Рахуємо Якобіани та глобальні похідні (Крок 3.a, 3.b)
         calculateJacobiansAndDerivatives()
 
@@ -429,16 +519,26 @@ class FEMBody {
             val eIndex = loadedFace.elementId - 1
             val faceNodesGlobal = getNodesForFace(loadedFace.elementId, loadedFace.faceIndex)
 
-            // Розраховуємо вектор для однієї грані
             val faceForces = calculateFE(pressure, loadedFace.faceIndex, faceNodesGlobal)
-
-            // Додаємо сили до загального вектора цього елемента
             for (i in 0 until 60) {
                 fe[eIndex][i] += faceForces[i]
             }
         }
 
+        // 4. Формуємо глобальну систему MG та fVec, накладаємо закріплення ZU (Крок 3.e, Крок 4)
         assembleGlobalSystem()
+
+        // 5. РОЗВ'ЯЗУЄМО СИСТЕМУ! (Отримуємо вектор переміщень u)
+        val u = solveConjugateGradient()
+
+        // 6. Формуємо фінальний масив деформованих координат
+        val deformedAkt = DoubleArray(akt.size)
+        for (i in akt.indices) {
+            deformedAkt[i] = akt[i] + u[i]
+        }
+
+        // Повертаємо координати деформованого тіла в Compose UI
+        return deformedAkt
     }
 
     private fun calculateNg(): Int {
