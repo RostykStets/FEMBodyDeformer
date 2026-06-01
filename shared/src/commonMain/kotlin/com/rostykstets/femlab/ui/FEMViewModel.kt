@@ -22,26 +22,23 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
     private val _youngModule = MutableStateFlow("4")
     val youngModule = _youngModule.asStateFlow()
 
-    private val _poissonRatio = MutableStateFlow("0.3") // v (зазвичай ~0.3)
+    private val _poissonRatio = MutableStateFlow("0.3")
     val poissonRatio = _poissonRatio.asStateFlow()
 
     private val _pressure = MutableStateFlow("2")
     val pressure = _pressure.asStateFlow()
 
-    // --- Стани обчислень ---
     private val _deformedBody = MutableStateFlow<DoubleArray?>(null)
     val deformedBody = _deformedBody.asStateFlow()
 
-    // Стан завантаження
     private val _isCalculating = MutableStateFlow(false)
     val isCalculating: StateFlow<Boolean> = _isCalculating
 
     init {
-        // Будуємо початкову сітку при створенні ViewModel
         rebuildMesh()
     }
 
-    // --- Методи для оновлення станів з UI ---
+
     fun updateSize(newSize: Vector3) {
         _bodySize.value = newSize
         rebuildMesh()
@@ -56,14 +53,13 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
     fun updatePoissonRatio(value: String) { _poissonRatio.value = value }
     fun updatePressure(value: String) {
         _pressure.value = value
-        // Одразу оновлюємо масиви граничних умов у FEMBody
+
         femBody.updateBoundaryArrays(value.toDoubleOrNull() ?: 0.0)
     }
 
-    // --- Основні дії ---
     private fun rebuildMesh() {
         femBody.buildElements(_bodySize.value, _bodySplits.value)
-        // Скидаємо попередній розв'язок
+
         _deformedBody.value = null
     }
 
@@ -95,7 +91,6 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
         viewModelScope.launch {
             _isCalculating.value = true
 
-            // Важка математика на фоновому потоці
             val result = withContext(Dispatchers.Default) {
                 femBody.solve(e, v, p)
             }

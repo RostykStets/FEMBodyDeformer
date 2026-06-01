@@ -9,7 +9,6 @@ class FEMBody {
     var nqp: Int = 0
     var ng: Int = 0
 
-    // Динамічні лічильники крайових умов
     var nzu: Int = 0
     var nep: Int = 0
 
@@ -18,32 +17,23 @@ class FEMBody {
 
     lateinit var dj: Array<Array<Array<DoubleArray>>>
 
-    // djDet: [nel][27 точок Гауса] - Визначник матриці Якобі
     lateinit var djDet: Array<DoubleArray>
 
-    // dfixyz: [nel][27 точок Гауса][20 вузлів][3 осі] - Глобальні похідні функцій форми
     lateinit var dfixyz: Array<Array<Array<DoubleArray>>>
 
-    // mge: [nel][60][60] - Локальні матриці жорсткості кожного елемента
     lateinit var mge: Array<Array<DoubleArray>>
 
-    // fe: [nel][60] - Вектори вузлових сил для кожного елемента
     lateinit var fe: Array<DoubleArray>
 
-    // --- Масиви для Кроку 4 (Глобальна система) ---
-    // mg: Стрічкова симетрична глобальна матриця жорсткості [загальна_кількість_ступенів_вільності][ng]
     lateinit var mg: Array<DoubleArray>
 
-    // fVec: Глобальний вектор навантажень [загальна_кількість_ступенів_вільності]
     lateinit var fVec: DoubleArray
 
-    // Головні структури крайових умов
     var zu: IntArray = IntArray(0)
-    var zp: DoubleArray = DoubleArray(0) // Лінеаризований масив [elementId, faceIdx, pressure, ...]
+    var zp: DoubleArray = DoubleArray(0)
 
-    // Інтерактивні набори вибраних граней (щоб уникнути дублікатів)
-    val fixedFaces = mutableStateListOf<ElementFace>() // Грані, закріплені користувачем (Сірі)
-    val loadedFaces = mutableStateListOf<ElementFace>() // Грані під тиском (Зелені)
+    val fixedFaces = mutableStateListOf<ElementFace>()
+    val loadedFaces = mutableStateListOf<ElementFace>()
 
     val externalFaces = mutableSetOf<ElementFace>()
 
@@ -58,7 +48,6 @@ class FEMBody {
         akt = DoubleArray(3 * nqp)
         nt = IntArray(20 * nel)
 
-        // Рахуємо крок сітки у Double, щоб не втратити точність!
         val hx = bodySize.x.toDouble() / nx
         val hy = bodySize.y.toDouble() / ny
         val hz = bodySize.z.toDouble() / nz
@@ -79,7 +68,6 @@ class FEMBody {
                         map[k][y][i] = nodeCounter
                         val base = (nodeCounter - 1) * 3
 
-                        // Множимо на половину кроку (hx / 2.0)
                         akt[base + 0] = k * (hx / 2.0)
                         akt[base + 1] = y * (hy / 2.0)
                         akt[base + 2] = i * (hz / 2.0)
@@ -127,7 +115,6 @@ class FEMBody {
         }
         ng = calculateNg()
 
-        // Очищуємо старі вибори при зміні розмірів сітки
         fixedFaces.clear()
         loadedFaces.clear()
 
@@ -136,19 +123,15 @@ class FEMBody {
         updateBoundaryArrays(0.0)
     }
 
-    // Метод, який фільтрує грані, залишаючи лише унікальні зовнішні поверхні
     private fun findExternalFaces() {
         externalFaces.clear()
 
-        // Тимчасова мапа, де ключ — це відсортований набір з 8 глобальних вузлів грані,
-        // а значення — список елементів, яким ця грань належить
         val faceSharingMap = mutableMapOf<List<Int>, MutableList<ElementFace>>()
 
         for (e in 1..nel) {
             for (fIdx in 1..6) {
-                // Отримуємо 8 глобальних вузлів для поточної грані
                 val nodes = getNodesForFace(e, fIdx)
-                // Сортуємо список вузлів, щоб однакові грані у різних елементів мали ідентичний ключ
+
                 val sortedKey = nodes.sorted()
 
                 if (!faceSharingMap.containsKey(sortedKey)) {
@@ -158,7 +141,6 @@ class FEMBody {
             }
         }
 
-        // Критерій граничної (зовнішньої) грані: вона належить лише ОДНОМУ скінченному елементу
         for ((_, sharingElements) in faceSharingMap) {
             if (sharingElements.size == 1) {
                 externalFaces.add(sharingElements[0])
@@ -166,19 +148,17 @@ class FEMBody {
         }
     }
 
-    // МАТЕМАТИЧНЕ ОБЧИСЛЕННЯ ЗНАЧЕНЬ nzu, nep ТА ФОРМУВАННЯ КІНЦЕВИХ МАСИВІВ ZU / ZP
     fun updateBoundaryArrays(currentPressure: Double) {
-        // 1. Обчислення для Закріплень (ZU)
+
         val uniqueNodes = mutableSetOf<Int>()
         for (face in fixedFaces) {
             val faceNodes = getNodesForFace(face.elementId, face.faceIndex)
-            // Додаємо всі 8 вузлів цієї грані в Set (автоматично прибирає дублікати на стиках)
+
             uniqueNodes.addAll(faceNodes.toTypedArray())
         }
         nzu = uniqueNodes.size
-        zu = uniqueNodes.sorted().toIntArray() // Масив ZU готовий
+        zu = uniqueNodes.sorted().toIntArray()
 
-        // 2. Обчислення для Навантажень (ZP)
         nep = loadedFaces.size
         zp = DoubleArray(nep * 3)
         loadedFaces.forEachIndexed { idx, face ->
@@ -189,33 +169,25 @@ class FEMBody {
         }
     }
 
-    // Повертає локальні номери вузлів (1..20) для заданої грані (за Рис. 2)
     private fun getLocalNodesForFace(faceIndex: Int): List<Int> {
         return when (faceIndex) {
-            1 -> listOf(1, 4, 3, 2, 12, 11, 10, 9)       // Нижня грань (z = min)
-            2 -> listOf(5, 6, 7, 8, 17, 18, 19, 20)      // Верхня грань (z = max)
-            3 -> listOf(1, 2, 6, 5, 9, 14, 17, 13)       // Передня грань (y = min)
-            4 -> listOf(2, 3, 7, 6, 10, 15, 18, 14)      // Права бічна (x = max)
-            5 -> listOf(3, 4, 8, 7, 11, 16, 19, 15)      // Задня грань (y = max)
-            6 -> listOf(4, 1, 5, 8, 12, 13, 20, 16)      // Ліва бічна (x = min)
+            1 -> listOf(1, 4, 3, 2, 12, 11, 10, 9)
+            2 -> listOf(5, 6, 7, 8, 17, 18, 19, 20)
+            3 -> listOf(1, 2, 6, 5, 9, 14, 17, 13)
+            4 -> listOf(2, 3, 7, 6, 10, 15, 18, 14)
+            5 -> listOf(3, 4, 8, 7, 11, 16, 19, 15)
+            6 -> listOf(4, 1, 5, 8, 12, 13, 20, 16)
             else -> emptyList()
         }
     }
 
-    // Повертає ГЛОБАЛЬНІ номери вузлів для заданої грані
     fun getNodesForFace(elementId: Int, faceIndex: Int): List<Int> {
         return getLocalNodesForFace(faceIndex).map { getGlobalNodeId(it, elementId) }
     }
 
-    /**
-     * Крок 3.c: Формування локальної матриці жорсткості елемента 60x60.
-     * @param e Модуль Юнга (Young's Modulus)
-     * @param v Коефіцієнт Пуассона (Poisson's ratio)
-     */
     private fun createMGE(elementIndex: Int, e: Double, v: Double): Array<DoubleArray> {
         val elementMGE = Array(60) { DoubleArray(60) }
 
-        // Коефіцієнти Ламе для ізотропного матеріалу
         val l = e * v / ((1.0 + v) * (1.0 - 2.0 * v))
         val mu = e / (2.0 * (1.0 + v))
 
@@ -232,7 +204,6 @@ class FEMBody {
                 var sum12 = 0.0; var sum13 = 0.0; var sum23 = 0.0
                 var gaussIndex = 0
 
-                // Потрійне інтегрування за Гаусом
                 for (m in GaussConstants.gaussianConst) {
                     for (n in GaussConstants.gaussianConst) {
                         for (k in GaussConstants.gaussianConst) {
@@ -240,7 +211,6 @@ class FEMBody {
                             val det = djDet[elementIndex][gaussIndex]
                             val dfi = dfixyz[elementIndex][gaussIndex]
 
-                            // Компоненти тензора пружності
                             sum11 += weight * (l * (1.0 - v) / v * (dfi[i][0] * dfi[j][0]) + mu * (dfi[i][1] * dfi[j][1] + dfi[i][2] * dfi[j][2])) * det
                             sum22 += weight * (l * (1.0 - v) / v * (dfi[i][1] * dfi[j][1]) + mu * (dfi[i][0] * dfi[j][0] + dfi[i][2] * dfi[j][2])) * det
                             sum33 += weight * (l * (1.0 - v) / v * (dfi[i][2] * dfi[j][2]) + mu * (dfi[i][0] * dfi[j][0] + dfi[i][1] * dfi[j][1])) * det
@@ -258,7 +228,6 @@ class FEMBody {
             }
         }
 
-        // Збирання блокових матриць у єдину матрицю 60x60
         for (i in 0 until 20) {
             for (j in 0 until 20) {
                 elementMGE[i][j] = a11[i][j]
@@ -277,14 +246,9 @@ class FEMBody {
         return elementMGE
     }
 
-    /**
-     * Крок 3.d: Формування локального вектора навантажень елемента (розмір 60).
-     * Інтегрування тиску по заданій 2D грані.
-     */
     private fun calculateFE(pressure: Double, faceIndex: Int, faceNodesGlobal: List<Int>): DoubleArray {
         val elementFE = DoubleArray(60)
 
-        // Отримуємо фізичні координати 8 вузлів грані
         val faceCoords = Array(8) { DoubleArray(3) }
         for (i in 0 until 8) {
             val gId = faceNodesGlobal[i]
@@ -293,7 +257,6 @@ class FEMBody {
             faceCoords[i][2] = getZ(gId)
         }
 
-        // Обчислення поверхневого Якобіана
         val dXYZdNT = Array(9) { Array(3) { DoubleArray(2) } }
         for (i in 0 until 9) {
             var sumXEta = 0.0; var sumYEta = 0.0; var sumZEta = 0.0
@@ -314,13 +277,12 @@ class FEMBody {
         val fe3 = DoubleArray(8)
 
         var gaussIndex = 0
-        // Подвійне інтегрування за Гаусом (по площині)
+
         for (m in GaussConstants.gaussianConst) {
             for (n in GaussConstants.gaussianConst) {
                 val weight = m * n
                 val jac = dXYZdNT[gaussIndex]
 
-                // Векторний добуток для знаходження нормалі до поверхні грані
                 val nx = jac[1][0] * jac[2][1] - jac[2][0] * jac[1][1]
                 val ny = jac[2][0] * jac[0][1] - jac[0][0] * jac[2][1]
                 val nz = jac[0][0] * jac[1][1] - jac[1][0] * jac[0][1]
@@ -335,56 +297,43 @@ class FEMBody {
             }
         }
 
-        // Записуємо розраховані сили у правильні місця 60-компонентного вектора
         val localNodes = getLocalNodesForFace(faceIndex)
         for (i in 0 until 8) {
-            val localId = localNodes[i] - 1 // Індекс вузла (0..19)
-            elementFE[localId] = fe1[i]           // Вісь X
-            elementFE[20 + localId] = fe2[i]      // Вісь Y
-            elementFE[40 + localId] = fe3[i]      // Вісь Z
+            val localId = localNodes[i] - 1
+            elementFE[localId] = fe1[i]
+            elementFE[20 + localId] = fe2[i]
+            elementFE[40 + localId] = fe3[i]
         }
 
         return elementFE
     }
 
-    /**
-     * Крок 3.e та Крок 4: Збирання глобальної стрічкової матриці та вектора сил.
-     * Застосування крайових умов (закріплень ZU).
-     */
     private fun assembleGlobalSystem() {
-        val totalDof = nqp * 3 // Загальна кількість ступенів вільності (по 3 осі на кожен вузол)
+        val totalDof = nqp * 3
 
-        // Ініціалізуємо глобальні масиви нулями
         mg = Array(totalDof) { DoubleArray(ng) }
         fVec = DoubleArray(totalDof)
 
-        // 1. РОЗКИДАННЯ ЛОКАЛЬНИХ МАТРИЦЬ (Асемблювання)
         for (eIndex in 0 until nel) {
             val elementId = eIndex + 1
 
             for (i in 0 until 60) {
-                // Визначаємо глобальний номер рядка для i-того локального ступеня вільності
                 val localNodeI = (i % 20) + 1
                 val axisI = i / 20
                 val globalNodeI = getGlobalNodeId(localNodeI, elementId)
                 val globalDofI = (globalNodeI - 1) * 3 + axisI
 
-                // Додаємо локальну силу до глобального вектора
                 fVec[globalDofI] += fe[eIndex][i]
 
                 for (j in 0 until 60) {
-                    // Визначаємо глобальний номер стовпця для j-того локального ступеня вільності
                     val localNodeJ = (j % 20) + 1
                     val axisJ = j / 20
                     val globalNodeJ = getGlobalNodeId(localNodeJ, elementId)
                     val globalDofJ = (globalNodeJ - 1) * 3 + axisJ
 
-                    // Оптимізація: зберігаємо ЛИШЕ верхню трикутну частину стрічкової матриці.
-                    // Якщо стовпець J правіше або дорівнює рядку I, ми записуємо це значення.
                     if (globalDofJ >= globalDofI) {
                         val colOffset = globalDofJ - globalDofI
 
-                        // Захист на випадок неправильного розрахунку ng
                         if (colOffset < ng) {
                             mg[globalDofI][colOffset] += mge[eIndex][i][j]
                         } else {
@@ -395,72 +344,54 @@ class FEMBody {
             }
         }
 
-        // 2. НАКЛАДАННЯ КРАЙОВИХ УМОВ (Метод великого числа)
-        // Для кожного закріпленого вузла ми ставимо гігантське число на головну діагональ.
         for (globalNodeId in zu) {
             val baseDof = (globalNodeId - 1) * 3
 
-            // Головна діагональ у нашій стрічковій матриці завжди має colOffset = 0
-            mg[baseDof + 0][0] = 1e16 // Вісь X
-            mg[baseDof + 1][0] = 1e16 // Вісь Y
-            mg[baseDof + 2][0] = 1e16 // Вісь Z
+            mg[baseDof + 0][0] = 1e16
+            mg[baseDof + 1][0] = 1e16
+            mg[baseDof + 2][0] = 1e16
 
-            // Зануляємо зовнішні сили в цих точках, щоб переміщення дорівнювало рівно 0.0
             fVec[baseDof + 0] = 0.0
             fVec[baseDof + 1] = 0.0
             fVec[baseDof + 2] = 0.0
         }
     }
 
-    /**
-     * Оптимізоване множення симетричної стрічкової матриці на вектор: result = A * x.
-     * Завдяки симетрії, ми розвертаємо верхню трикутну частину стрічки і "віддзеркалюємо" її вниз.
-     */
     private fun multiplyBandMatrix(matrix: Array<DoubleArray>, x: DoubleArray, result: DoubleArray) {
         val n = x.size
-        // Очищаємо результуючий вектор
         for (i in 0 until n) {
             result[i] = 0.0
         }
 
         for (i in 0 until n) {
-            // Множення на елемент головної діагоналі
             result[i] += matrix[i][0] * x[i]
 
-            // Множення на недіагональні елементи
             for (j in 1 until ng) {
                 val col = i + j
                 if (col < n) {
-                    // Внесок верхнього трикутника матриці
                     result[i] += matrix[i][j] * x[col]
-                    // Внесок нижнього трикутника (завдяки симетрії A[i][col] == A[col][i])
                     result[col] += matrix[i][j] * x[i]
                 }
             }
         }
     }
-
-    /**
-     * Крок 5: Розв'язання СЛАР Методом Спряжених Градієнтів (CG).
-     * @return Вектор деформацій u.
-     */
     private fun solveConjugateGradient(): DoubleArray {
         val n = fVec.size
-        val u = DoubleArray(n) { 0.0 }     // Початкове наближення (переміщення = 0)
-        val r = fVec.copyOf()              // Початкова нев'язка (дорівнює силам, бо u=0)
-        val p = r.copyOf()                 // Початковий напрямок
-        val Ap = DoubleArray(n)            // Допоміжний вектор для множення матриці на напрямок
+        val u = DoubleArray(n) { 0.0 }
+        val r = fVec.copyOf()
+        val p = r.copyOf()
+        val Ap = DoubleArray(n)
 
         var rsold = 0.0
         for (i in 0 until n) {
             rsold += r[i] * r[i]
         }
 
-        val maxIter = 10000 // Запобіжник від нескінченного циклу
-        val epsilon = 1e-8  // Точність розв'язку
+        val maxIter = 10000
+        val epsilon = 1e-8
 
         for (iter in 0 until maxIter) {
-            // Ap = A * p
+
             multiplyBandMatrix(mg, p, Ap)
 
             var pAp = 0.0
@@ -468,10 +399,8 @@ class FEMBody {
                 pAp += p[i] * Ap[i]
             }
 
-            // Обчислення розміру кроку alpha
             val alpha = rsold / pAp
 
-            // Оновлення вектора переміщень u та вектора нев'язки r
             for (i in 0 until n) {
                 u[i] += alpha * p[i]
                 r[i] -= alpha * Ap[i]
@@ -482,12 +411,10 @@ class FEMBody {
                 rsnew += r[i] * r[i]
             }
 
-            // Умова виходу: якщо похибка стала мізерною, рівняння розв'язано!
             if (kotlin.math.sqrt(rsnew) < epsilon) {
                 break
             }
 
-            // Оновлення напрямку для наступної ітерації
             val beta = rsnew / rsold
             for (i in 0 until n) {
                 p[i] = r[i] + beta * p[i]
@@ -498,23 +425,17 @@ class FEMBody {
         return u
     }
 
-    /**
-     * Головна обчислювальна функція.
-     * @return DoubleArray - Нові (деформовані) координати вузлів сітки для рендеру.
-     */
     fun solve(e: Double, v: Double, pressure: Double): DoubleArray {
-        // 1. Рахуємо Якобіани та глобальні похідні (Крок 3.a, 3.b)
+
         calculateJacobiansAndDerivatives()
 
         mge = Array(nel) { Array(60) { DoubleArray(60) } }
         fe = Array(nel) { DoubleArray(60) }
 
-        // 2. Рахуємо матриці жорсткості для всіх елементів (Крок 3.c)
         for (i in 1..nel) {
             mge[i - 1] = createMGE(i - 1, e, v)
         }
 
-        // 3. Рахуємо сили навантаження тільки для тих граней, які виділив користувач (Крок 3.d)
         for (loadedFace in loadedFaces) {
             val eIndex = loadedFace.elementId - 1
             val faceNodesGlobal = getNodesForFace(loadedFace.elementId, loadedFace.faceIndex)
@@ -525,19 +446,15 @@ class FEMBody {
             }
         }
 
-        // 4. Формуємо глобальну систему MG та fVec, накладаємо закріплення ZU (Крок 3.e, Крок 4)
         assembleGlobalSystem()
 
-        // 5. РОЗВ'ЯЗУЄМО СИСТЕМУ! (Отримуємо вектор переміщень u)
         val u = solveConjugateGradient()
 
-        // 6. Формуємо фінальний масив деформованих координат
         val deformedAkt = DoubleArray(akt.size)
         for (i in akt.indices) {
             deformedAkt[i] = akt[i] + u[i]
         }
 
-        // Повертаємо координати деформованого тіла в Compose UI
         return deformedAkt
     }
 
@@ -585,7 +502,6 @@ class FEMBody {
         for (e in 1..nel) {
             val elementIndex = e - 1
 
-            // Дістаємо координати 20 вузлів поточного елемента
             val cubeCoords = Array(20) { DoubleArray(3) }
             for (local in 1..20) {
                 val globalId = getGlobalNodeId(local, e)
@@ -594,10 +510,8 @@ class FEMBody {
                 cubeCoords[local - 1][2] = getZ(globalId)
             }
 
-            // 3.a) Рахуємо Якобіан для 27 точок Гауса цього елемента
             createDJ(elementIndex, cubeCoords)
 
-            // 3.b) Рахуємо Глобальні похідні для цього елемента
             createDFIXYZ(elementIndex)
         }
     }
@@ -613,7 +527,6 @@ class FEMBody {
             for (j in 0 until 20) {
                 val point = cubeCoords[j]
 
-                // Звертаємося до нашого закешованого об'єкта з Кроку 2
                 val dfa = GaussConstants.dfiabg[i][j][0]
                 val dfb = GaussConstants.dfiabg[i][j][1]
                 val dfg = GaussConstants.dfiabg[i][j][2]
@@ -623,12 +536,10 @@ class FEMBody {
                 sumZA += point[2] * dfa; sumZB += point[2] * dfb; sumZG += point[2] * dfg
             }
 
-            // Формуємо матрицю 3x3 з усуненням мікропохибок (округленням)
             dj[elementIndex][i][0][0] = cleanZero(sumXA, eps); dj[elementIndex][i][0][1] = cleanZero(sumYA, eps); dj[elementIndex][i][0][2] = cleanZero(sumZA, eps)
             dj[elementIndex][i][1][0] = cleanZero(sumXB, eps); dj[elementIndex][i][1][1] = cleanZero(sumYB, eps); dj[elementIndex][i][1][2] = cleanZero(sumZB, eps)
             dj[elementIndex][i][2][0] = cleanZero(sumXG, eps); dj[elementIndex][i][2][1] = cleanZero(sumYG, eps); dj[elementIndex][i][2][2] = cleanZero(sumZG, eps)
 
-            // Обчислення визначника Якобіана (за Правилом Саррюса)
             val d = dj[elementIndex][i]
             djDet[elementIndex][i] = d[0][0] * d[1][1] * d[2][2] +
                     d[0][1] * d[1][2] * d[2][0] +
@@ -653,19 +564,15 @@ class FEMBody {
             val d = dj[elementIndex][i]
             val det = djDet[elementIndex][i]
 
-            // Захист від вироджених (сплеснутих або вивернутих) елементів
             if (kotlin.math.abs(det) < 1e-12) {
                 throw IllegalStateException("Якобіан вироджений (det = 0) у точці Гауса $i елемента $elementIndex. Перевірте правильність нумерації вузлів елемента!")
             }
 
             for (j in 0 until 20) {
-                // Вектор локальних похідних для конкретного вузла
                 val b0 = GaussConstants.dfiabg[i][j][0]
                 val b1 = GaussConstants.dfiabg[i][j][1]
                 val b2 = GaussConstants.dfiabg[i][j][2]
 
-                // Швидке аналітичне розв'язання системи 3x3 за методом Крамера
-                // Обчислюємо визначники 3-х підматриць, замінюючи відповідні стовпці на вектор вільних членів (b)
                 val detX = b0 * d[1][1] * d[2][2] + d[0][1] * d[1][2] * b2 + d[0][2] * b1 * d[2][1] -
                         d[0][2] * d[1][1] * b2 - b0 * d[1][2] * d[2][1] - d[0][1] * b1 * d[2][2]
 
@@ -675,7 +582,6 @@ class FEMBody {
                 val detZ = d[0][0] * d[1][1] * b2 + d[0][1] * b1 * d[2][0] + b0 * d[1][0] * d[2][1] -
                         b0 * d[1][1] * d[2][0] - d[0][0] * b1 * d[2][1] - d[0][1] * d[1][0] * b2
 
-                // Фінальні глобальні похідні (ділимо на головний визначник)
                 dfixyz[elementIndex][i][j][0] = detX / det
                 dfixyz[elementIndex][i][j][1] = detY / det
                 dfixyz[elementIndex][i][j][2] = detZ / det
