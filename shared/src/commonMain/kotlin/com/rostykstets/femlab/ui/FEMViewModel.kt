@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FEMViewModel(private val femBody: FEMBody): ViewModel() {
+class FEMViewModel(val femBody: FEMBody): ViewModel() {
 
     private val _bodySize = MutableStateFlow(Vector3(4f, 4f, 4f))
     val bodySize = _bodySize.asStateFlow()
