@@ -4,19 +4,15 @@ import kotlin.math.sqrt
 
 object GaussConstants {
 
-    // Координати точок Гауса для 3-точкового інтегрування
     val gaussianCoords = doubleArrayOf(-sqrt(0.6), 0.0, sqrt(0.6))
 
-    // Вагові коефіцієнти для інтегрування
     val gaussianConst = doubleArrayOf(5.0 / 9.0, 8.0 / 9.0, 5.0 / 9.0)
 
-    // Локальні координати 8 вузлів 2D-грані
     val localPoints2D = arrayOf(
         doubleArrayOf(-1.0, -1.0), doubleArrayOf(1.0, -1.0), doubleArrayOf(1.0, 1.0), doubleArrayOf(-1.0, 1.0),
         doubleArrayOf(0.0, -1.0), doubleArrayOf(1.0, 0.0), doubleArrayOf(0.0, 1.0), doubleArrayOf(-1.0, 0.0)
     )
 
-    // Локальні координати 20 вузлів 3D-елемента
     val localPoints3D = arrayOf(
         doubleArrayOf(-1.0, 1.0, -1.0), doubleArrayOf(1.0, 1.0, -1.0), doubleArrayOf(1.0, -1.0, -1.0), doubleArrayOf(-1.0, -1.0, -1.0),
         doubleArrayOf(-1.0, 1.0, 1.0), doubleArrayOf(1.0, 1.0, 1.0), doubleArrayOf(1.0, -1.0, 1.0), doubleArrayOf(-1.0, -1.0, 1.0),
@@ -25,13 +21,10 @@ object GaussConstants {
         doubleArrayOf(0.0, 1.0, 1.0), doubleArrayOf(1.0, 0.0, 1.0), doubleArrayOf(0.0, -1.0, 1.0), doubleArrayOf(-1.0, 0.0, 1.0)
     )
 
-    // Масив похідних об'ємних функцій форми: [27 точок Гауса][20 вузлів][3 осі]
     val dfiabg = Array(27) { Array(20) { DoubleArray(3) } }
 
-    // Масив похідних поверхневих функцій форми (для граней): [9 точок Гауса][8 вузлів][2 осі]
     val dpsite = Array(9) { Array(8) { DoubleArray(2) } }
 
-    // Масив значень самих поверхневих функцій форми: [9 точок Гауса][8 вузлів]
     val dpsiteXYZdeNT = Array(9) { DoubleArray(8) }
 
     init {
@@ -53,10 +46,8 @@ object GaussConstants {
                     for (i in localPoints3D.indices) {
                         val point = localPoints3D[i]
                         if (i <= 7) {
-                            // Кутові вузли
                             dfiabg[index][i] = dfiabg18(alpha, beta, gamma, point[0], point[1], point[2])
                         } else {
-                            // Серединні вузли ребер
                             dfiabg[index][i] = dfiabg14(alpha, beta, gamma, point[0], point[1], point[2])
                         }
                     }
