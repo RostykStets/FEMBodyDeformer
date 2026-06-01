@@ -24,6 +24,12 @@ class FEMBody {
     // dfixyz: [nel][27 точок Гауса][20 вузлів][3 осі] - Глобальні похідні функцій форми
     lateinit var dfixyz: Array<Array<Array<DoubleArray>>>
 
+    // mge: [nel][60][60] - Локальні матриці жорсткості кожного елемента
+    lateinit var mge: Array<Array<DoubleArray>>
+
+    // fe: [nel][60] - Вектори вузлових сил для кожного елемента
+    lateinit var fe: Array<DoubleArray>
+
     // Головні структури крайових умов
     var zu: IntArray = IntArray(0)
     var zp: DoubleArray = DoubleArray(0) // Лінеаризований масив [elementId, faceIdx, pressure, ...]
@@ -176,9 +182,9 @@ class FEMBody {
         }
     }
 
-    // Повертає список із 8 локальних вузлів, що утворюють конкретну грань елемента (згідно з Рис. 2)
-    fun getNodesForFace(elementId: Int, faceIndex: Int): List<Int> {
-        val localIndices = when (faceIndex) {
+    // Повертає локальні номери вузлів (1..20) для заданої грані (за Рис. 2)
+    private fun getLocalNodesForFace(faceIndex: Int): List<Int> {
+        return when (faceIndex) {
             1 -> listOf(1, 4, 3, 2, 12, 11, 10, 9)       // Нижня грань (z = min)
             2 -> listOf(5, 6, 7, 8, 17, 18, 19, 20)      // Верхня грань (z = max)
             3 -> listOf(1, 2, 6, 5, 9, 14, 17, 13)       // Передня грань (y = min)
@@ -187,7 +193,178 @@ class FEMBody {
             6 -> listOf(4, 1, 5, 8, 12, 13, 20, 16)      // Ліва бічна (x = min)
             else -> emptyList()
         }
-        return localIndices.map { getGlobalNodeId(it, elementId) }
+    }
+
+    // Повертає ГЛОБАЛЬНІ номери вузлів для заданої грані
+    fun getNodesForFace(elementId: Int, faceIndex: Int): List<Int> {
+        return getLocalNodesForFace(faceIndex).map { getGlobalNodeId(it, elementId) }
+    }
+
+    /**
+     * Крок 3.c: Формування локальної матриці жорсткості елемента 60x60.
+     * @param e Модуль Юнга (Young's Modulus)
+     * @param v Коефіцієнт Пуассона (Poisson's ratio)
+     */
+    private fun createMGE(elementIndex: Int, e: Double, v: Double): Array<DoubleArray> {
+        val elementMGE = Array(60) { DoubleArray(60) }
+
+        // Коефіцієнти Ламе для ізотропного матеріалу
+        val l = e * v / ((1.0 + v) * (1.0 - 2.0 * v))
+        val mu = e / (2.0 * (1.0 + v))
+
+        val a11 = Array(20) { DoubleArray(20) }
+        val a22 = Array(20) { DoubleArray(20) }
+        val a33 = Array(20) { DoubleArray(20) }
+        val a12 = Array(20) { DoubleArray(20) }
+        val a13 = Array(20) { DoubleArray(20) }
+        val a23 = Array(20) { DoubleArray(20) }
+
+        for (i in 0 until 20) {
+            for (j in 0 until 20) {
+                var sum11 = 0.0; var sum22 = 0.0; var sum33 = 0.0
+                var sum12 = 0.0; var sum13 = 0.0; var sum23 = 0.0
+                var gaussIndex = 0
+
+                // Потрійне інтегрування за Гаусом
+                for (m in GaussConstants.gaussianConst) {
+                    for (n in GaussConstants.gaussianConst) {
+                        for (k in GaussConstants.gaussianConst) {
+                            val weight = m * n * k
+                            val det = djDet[elementIndex][gaussIndex]
+                            val dfi = dfixyz[elementIndex][gaussIndex]
+
+                            // Компоненти тензора пружності
+                            sum11 += weight * (l * (1.0 - v) / v * (dfi[i][0] * dfi[j][0]) + mu * (dfi[i][1] * dfi[j][1] + dfi[i][2] * dfi[j][2])) * det
+                            sum22 += weight * (l * (1.0 - v) / v * (dfi[i][1] * dfi[j][1]) + mu * (dfi[i][0] * dfi[j][0] + dfi[i][2] * dfi[j][2])) * det
+                            sum33 += weight * (l * (1.0 - v) / v * (dfi[i][2] * dfi[j][2]) + mu * (dfi[i][0] * dfi[j][0] + dfi[i][1] * dfi[j][1])) * det
+
+                            sum12 += weight * (l * (dfi[i][0] * dfi[j][1]) + mu * (dfi[i][1] * dfi[j][0])) * det
+                            sum13 += weight * (l * (dfi[i][0] * dfi[j][2]) + mu * (dfi[i][2] * dfi[j][0])) * det
+                            sum23 += weight * (l * (dfi[i][1] * dfi[j][2]) + mu * (dfi[i][2] * dfi[j][1])) * det
+
+                            gaussIndex++
+                        }
+                    }
+                }
+                a11[i][j] = sum11; a22[i][j] = sum22; a33[i][j] = sum33
+                a12[i][j] = sum12; a13[i][j] = sum13; a23[i][j] = sum23
+            }
+        }
+
+        // Збирання блокових матриць у єдину матрицю 60x60
+        for (i in 0 until 20) {
+            for (j in 0 until 20) {
+                elementMGE[i][j] = a11[i][j]
+                elementMGE[i][20 + j] = a12[i][j]
+                elementMGE[i][40 + j] = a13[i][j]
+
+                elementMGE[20 + i][j] = a12[j][i]
+                elementMGE[20 + i][20 + j] = a22[i][j]
+                elementMGE[20 + i][40 + j] = a23[i][j]
+
+                elementMGE[40 + i][j] = a13[j][i]
+                elementMGE[40 + i][20 + j] = a23[j][i]
+                elementMGE[40 + i][40 + j] = a33[i][j]
+            }
+        }
+        return elementMGE
+    }
+
+    /**
+     * Крок 3.d: Формування локального вектора навантажень елемента (розмір 60).
+     * Інтегрування тиску по заданій 2D грані.
+     */
+    private fun calculateFE(pressure: Double, faceIndex: Int, faceNodesGlobal: List<Int>): DoubleArray {
+        val elementFE = DoubleArray(60)
+
+        // Отримуємо фізичні координати 8 вузлів грані
+        val faceCoords = Array(8) { DoubleArray(3) }
+        for (i in 0 until 8) {
+            val gId = faceNodesGlobal[i]
+            faceCoords[i][0] = getX(gId)
+            faceCoords[i][1] = getY(gId)
+            faceCoords[i][2] = getZ(gId)
+        }
+
+        // Обчислення поверхневого Якобіана
+        val dXYZdNT = Array(9) { Array(3) { DoubleArray(2) } }
+        for (i in 0 until 9) {
+            var sumXEta = 0.0; var sumYEta = 0.0; var sumZEta = 0.0
+            var sumXTau = 0.0; var sumYTau = 0.0; var sumZTau = 0.0
+            for (j in 0 until 8) {
+                val pt = faceCoords[j]
+                val dpsite = GaussConstants.dpsite[i][j]
+                sumXEta += pt[0] * dpsite[0]; sumYEta += pt[1] * dpsite[0]; sumZEta += pt[2] * dpsite[0]
+                sumXTau += pt[0] * dpsite[1]; sumYTau += pt[1] * dpsite[1]; sumZTau += pt[2] * dpsite[1]
+            }
+            dXYZdNT[i][0][0] = sumXEta; dXYZdNT[i][0][1] = sumXTau
+            dXYZdNT[i][1][0] = sumYEta; dXYZdNT[i][1][1] = sumYTau
+            dXYZdNT[i][2][0] = sumZEta; dXYZdNT[i][2][1] = sumZTau
+        }
+
+        val fe1 = DoubleArray(8)
+        val fe2 = DoubleArray(8)
+        val fe3 = DoubleArray(8)
+
+        var gaussIndex = 0
+        // Подвійне інтегрування за Гаусом (по площині)
+        for (m in GaussConstants.gaussianConst) {
+            for (n in GaussConstants.gaussianConst) {
+                val weight = m * n
+                val jac = dXYZdNT[gaussIndex]
+
+                // Векторний добуток для знаходження нормалі до поверхні грані
+                val nx = jac[1][0] * jac[2][1] - jac[2][0] * jac[1][1]
+                val ny = jac[2][0] * jac[0][1] - jac[0][0] * jac[2][1]
+                val nz = jac[0][0] * jac[1][1] - jac[1][0] * jac[0][1]
+
+                for (i in 0 until 8) {
+                    val shapeVal = GaussConstants.dpsiteXYZdeNT[gaussIndex][i]
+                    fe1[i] += weight * pressure * nx * shapeVal
+                    fe2[i] += weight * pressure * ny * shapeVal
+                    fe3[i] += weight * pressure * nz * shapeVal
+                }
+                gaussIndex++
+            }
+        }
+
+        // Записуємо розраховані сили у правильні місця 60-компонентного вектора
+        val localNodes = getLocalNodesForFace(faceIndex)
+        for (i in 0 until 8) {
+            val localId = localNodes[i] - 1 // Індекс вузла (0..19)
+            elementFE[localId] = fe1[i]           // Вісь X
+            elementFE[20 + localId] = fe2[i]      // Вісь Y
+            elementFE[40 + localId] = fe3[i]      // Вісь Z
+        }
+
+        return elementFE
+    }
+
+    fun solve(e: Double, v: Double, pressure: Double) {
+        // 1. Рахуємо Якобіани та глобальні похідні (Крок 3.a, 3.b)
+        calculateJacobiansAndDerivatives()
+
+        mge = Array(nel) { Array(60) { DoubleArray(60) } }
+        fe = Array(nel) { DoubleArray(60) }
+
+        // 2. Рахуємо матриці жорсткості для всіх елементів (Крок 3.c)
+        for (i in 1..nel) {
+            mge[i - 1] = createMGE(i - 1, e, v)
+        }
+
+        // 3. Рахуємо сили навантаження тільки для тих граней, які виділив користувач (Крок 3.d)
+        for (loadedFace in loadedFaces) {
+            val eIndex = loadedFace.elementId - 1
+            val faceNodesGlobal = getNodesForFace(loadedFace.elementId, loadedFace.faceIndex)
+
+            // Розраховуємо вектор для однієї грані
+            val faceForces = calculateFE(pressure, loadedFace.faceIndex, faceNodesGlobal)
+
+            // Додаємо сили до загального вектора цього елемента
+            for (i in 0 until 60) {
+                fe[eIndex][i] += faceForces[i]
+            }
+        }
     }
 
     private fun calculateNg(): Int {
