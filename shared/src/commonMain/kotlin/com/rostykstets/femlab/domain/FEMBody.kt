@@ -16,6 +16,14 @@ class FEMBody {
     lateinit var akt: DoubleArray
     lateinit var nt: IntArray
 
+    lateinit var dj: Array<Array<Array<DoubleArray>>>
+
+    // djDet: [nel][27 точок Гауса] - Визначник матриці Якобі
+    lateinit var djDet: Array<DoubleArray>
+
+    // dfixyz: [nel][27 точок Гауса][20 вузлів][3 осі] - Глобальні похідні функцій форми
+    lateinit var dfixyz: Array<Array<Array<DoubleArray>>>
+
     // Головні структури крайових умов
     var zu: IntArray = IntArray(0)
     var zp: DoubleArray = DoubleArray(0) // Лінеаризований масив [elementId, faceIdx, pressure, ...]
@@ -216,6 +224,112 @@ class FEMBody {
 
     fun getGlobalNodeId(localNode: Int, elementId: Int): Int {
         return nt[(localNode - 1) + (elementId - 1) * 20]
+    }
+
+    fun calculateJacobiansAndDerivatives() {
+        dj = Array(nel) { Array(27) { Array(3) { DoubleArray(3) } } }
+        djDet = Array(nel) { DoubleArray(27) }
+        dfixyz = Array(nel) { Array(27) { Array(20) { DoubleArray(3) } } }
+
+        for (e in 1..nel) {
+            val elementIndex = e - 1
+
+            // Дістаємо координати 20 вузлів поточного елемента
+            val cubeCoords = Array(20) { DoubleArray(3) }
+            for (local in 1..20) {
+                val globalId = getGlobalNodeId(local, e)
+                cubeCoords[local - 1][0] = getX(globalId)
+                cubeCoords[local - 1][1] = getY(globalId)
+                cubeCoords[local - 1][2] = getZ(globalId)
+            }
+
+            // 3.a) Рахуємо Якобіан для 27 точок Гауса цього елемента
+            createDJ(elementIndex, cubeCoords)
+
+            // 3.b) Рахуємо Глобальні похідні для цього елемента
+            createDFIXYZ(elementIndex)
+        }
+    }
+
+    private fun createDJ(elementIndex: Int, cubeCoords: Array<DoubleArray>) {
+        val eps = 1e-10
+
+        for (i in 0 until 27) {
+            var sumXA = 0.0; var sumXB = 0.0; var sumXG = 0.0
+            var sumYA = 0.0; var sumYB = 0.0; var sumYG = 0.0
+            var sumZA = 0.0; var sumZB = 0.0; var sumZG = 0.0
+
+            for (j in 0 until 20) {
+                val point = cubeCoords[j]
+
+                // Звертаємося до нашого закешованого об'єкта з Кроку 2
+                val dfa = GaussConstants.dfiabg[i][j][0]
+                val dfb = GaussConstants.dfiabg[i][j][1]
+                val dfg = GaussConstants.dfiabg[i][j][2]
+
+                sumXA += point[0] * dfa; sumXB += point[0] * dfb; sumXG += point[0] * dfg
+                sumYA += point[1] * dfa; sumYB += point[1] * dfb; sumYG += point[1] * dfg
+                sumZA += point[2] * dfa; sumZB += point[2] * dfb; sumZG += point[2] * dfg
+            }
+
+            // Формуємо матрицю 3x3 з усуненням мікропохибок (округленням)
+            dj[elementIndex][i][0][0] = cleanZero(sumXA, eps); dj[elementIndex][i][0][1] = cleanZero(sumYA, eps); dj[elementIndex][i][0][2] = cleanZero(sumZA, eps)
+            dj[elementIndex][i][1][0] = cleanZero(sumXB, eps); dj[elementIndex][i][1][1] = cleanZero(sumYB, eps); dj[elementIndex][i][1][2] = cleanZero(sumZB, eps)
+            dj[elementIndex][i][2][0] = cleanZero(sumXG, eps); dj[elementIndex][i][2][1] = cleanZero(sumYG, eps); dj[elementIndex][i][2][2] = cleanZero(sumZG, eps)
+
+            // Обчислення визначника Якобіана (за Правилом Саррюса)
+            val d = dj[elementIndex][i]
+            djDet[elementIndex][i] = d[0][0] * d[1][1] * d[2][2] +
+                    d[0][1] * d[1][2] * d[2][0] +
+                    d[0][2] * d[1][0] * d[2][1] -
+                    d[0][2] * d[1][1] * d[2][0] -
+                    d[0][0] * d[1][2] * d[2][1] -
+                    d[0][1] * d[1][0] * d[2][2]
+        }
+    }
+
+    private fun cleanZero(value: Double, eps: Double): Double {
+        return when {
+            kotlin.math.abs(value) < eps -> 0.0
+            kotlin.math.abs(value - 1.0) < eps -> 1.0
+            kotlin.math.abs(value + 1.0) < eps -> -1.0
+            else -> value
+        }
+    }
+
+    private fun createDFIXYZ(elementIndex: Int) {
+        for (i in 0 until 27) {
+            val d = dj[elementIndex][i]
+            val det = djDet[elementIndex][i]
+
+            // Захист від вироджених (сплеснутих або вивернутих) елементів
+            if (kotlin.math.abs(det) < 1e-12) {
+                throw IllegalStateException("Якобіан вироджений (det = 0) у точці Гауса $i елемента $elementIndex. Перевірте правильність нумерації вузлів елемента!")
+            }
+
+            for (j in 0 until 20) {
+                // Вектор локальних похідних для конкретного вузла
+                val b0 = GaussConstants.dfiabg[i][j][0]
+                val b1 = GaussConstants.dfiabg[i][j][1]
+                val b2 = GaussConstants.dfiabg[i][j][2]
+
+                // Швидке аналітичне розв'язання системи 3x3 за методом Крамера
+                // Обчислюємо визначники 3-х підматриць, замінюючи відповідні стовпці на вектор вільних членів (b)
+                val detX = b0 * d[1][1] * d[2][2] + d[0][1] * d[1][2] * b2 + d[0][2] * b1 * d[2][1] -
+                        d[0][2] * d[1][1] * b2 - b0 * d[1][2] * d[2][1] - d[0][1] * b1 * d[2][2]
+
+                val detY = d[0][0] * b1 * d[2][2] + b0 * d[1][2] * d[2][0] + d[0][2] * d[1][0] * b2 -
+                        d[0][2] * b1 * d[2][0] - d[0][0] * d[1][2] * b2 - b0 * d[1][0] * d[2][2]
+
+                val detZ = d[0][0] * d[1][1] * b2 + d[0][1] * b1 * d[2][0] + b0 * d[1][0] * d[2][1] -
+                        b0 * d[1][1] * d[2][0] - d[0][0] * b1 * d[2][1] - d[0][1] * d[1][0] * b2
+
+                // Фінальні глобальні похідні (ділимо на головний визначник)
+                dfixyz[elementIndex][i][j][0] = detX / det
+                dfixyz[elementIndex][i][j][1] = detY / det
+                dfixyz[elementIndex][i][j][2] = detZ / det
+            }
+        }
     }
 
     fun getX(nodeGlobalId: Int): Double = akt[(nodeGlobalId - 1) * 3 + 0]
