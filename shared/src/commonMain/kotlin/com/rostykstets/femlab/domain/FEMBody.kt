@@ -30,6 +30,13 @@ class FEMBody {
     // fe: [nel][60] - Вектори вузлових сил для кожного елемента
     lateinit var fe: Array<DoubleArray>
 
+    // --- Масиви для Кроку 4 (Глобальна система) ---
+    // mg: Стрічкова симетрична глобальна матриця жорсткості [загальна_кількість_ступенів_вільності][ng]
+    lateinit var mg: Array<DoubleArray>
+
+    // fVec: Глобальний вектор навантажень [загальна_кількість_ступенів_вільності]
+    lateinit var fVec: DoubleArray
+
     // Головні структури крайових умов
     var zu: IntArray = IntArray(0)
     var zp: DoubleArray = DoubleArray(0) // Лінеаризований масив [elementId, faceIdx, pressure, ...]
@@ -340,6 +347,71 @@ class FEMBody {
         return elementFE
     }
 
+    /**
+     * Крок 3.e та Крок 4: Збирання глобальної стрічкової матриці та вектора сил.
+     * Застосування крайових умов (закріплень ZU).
+     */
+    private fun assembleGlobalSystem() {
+        val totalDof = nqp * 3 // Загальна кількість ступенів вільності (по 3 осі на кожен вузол)
+
+        // Ініціалізуємо глобальні масиви нулями
+        mg = Array(totalDof) { DoubleArray(ng) }
+        fVec = DoubleArray(totalDof)
+
+        // 1. РОЗКИДАННЯ ЛОКАЛЬНИХ МАТРИЦЬ (Асемблювання)
+        for (eIndex in 0 until nel) {
+            val elementId = eIndex + 1
+
+            for (i in 0 until 60) {
+                // Визначаємо глобальний номер рядка для i-того локального ступеня вільності
+                val localNodeI = (i % 20) + 1
+                val axisI = i / 20
+                val globalNodeI = getGlobalNodeId(localNodeI, elementId)
+                val globalDofI = (globalNodeI - 1) * 3 + axisI
+
+                // Додаємо локальну силу до глобального вектора
+                fVec[globalDofI] += fe[eIndex][i]
+
+                for (j in 0 until 60) {
+                    // Визначаємо глобальний номер стовпця для j-того локального ступеня вільності
+                    val localNodeJ = (j % 20) + 1
+                    val axisJ = j / 20
+                    val globalNodeJ = getGlobalNodeId(localNodeJ, elementId)
+                    val globalDofJ = (globalNodeJ - 1) * 3 + axisJ
+
+                    // Оптимізація: зберігаємо ЛИШЕ верхню трикутну частину стрічкової матриці.
+                    // Якщо стовпець J правіше або дорівнює рядку I, ми записуємо це значення.
+                    if (globalDofJ >= globalDofI) {
+                        val colOffset = globalDofJ - globalDofI
+
+                        // Захист на випадок неправильного розрахунку ng
+                        if (colOffset < ng) {
+                            mg[globalDofI][colOffset] += mge[eIndex][i][j]
+                        } else {
+                            throw IllegalStateException("Ширина стрічки ng ($ng) занадто мала! Потрібно як мінімум ${colOffset + 1}")
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. НАКЛАДАННЯ КРАЙОВИХ УМОВ (Метод великого числа)
+        // Для кожного закріпленого вузла ми ставимо гігантське число на головну діагональ.
+        for (globalNodeId in zu) {
+            val baseDof = (globalNodeId - 1) * 3
+
+            // Головна діагональ у нашій стрічковій матриці завжди має colOffset = 0
+            mg[baseDof + 0][0] = 1e16 // Вісь X
+            mg[baseDof + 1][0] = 1e16 // Вісь Y
+            mg[baseDof + 2][0] = 1e16 // Вісь Z
+
+            // Зануляємо зовнішні сили в цих точках, щоб переміщення дорівнювало рівно 0.0
+            fVec[baseDof + 0] = 0.0
+            fVec[baseDof + 1] = 0.0
+            fVec[baseDof + 2] = 0.0
+        }
+    }
+
     fun solve(e: Double, v: Double, pressure: Double) {
         // 1. Рахуємо Якобіани та глобальні похідні (Крок 3.a, 3.b)
         calculateJacobiansAndDerivatives()
@@ -365,6 +437,8 @@ class FEMBody {
                 fe[eIndex][i] += faceForces[i]
             }
         }
+
+        assembleGlobalSystem()
     }
 
     private fun calculateNg(): Int {
