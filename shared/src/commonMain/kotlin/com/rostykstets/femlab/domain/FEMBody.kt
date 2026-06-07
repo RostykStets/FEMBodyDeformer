@@ -200,8 +200,12 @@ class FEMBody {
 
         for (i in 0 until 20) {
             for (j in 0 until 20) {
-                var sum11 = 0.0; var sum22 = 0.0; var sum33 = 0.0
-                var sum12 = 0.0; var sum13 = 0.0; var sum23 = 0.0
+                var sum11 = 0.0
+                var sum22 = 0.0
+                var sum33 = 0.0
+                var sum12 = 0.0
+                var sum13 = 0.0
+                var sum23 = 0.0
                 var gaussIndex = 0
 
                 for (m in GaussConstants.gaussianConst) {
@@ -223,8 +227,12 @@ class FEMBody {
                         }
                     }
                 }
-                a11[i][j] = sum11; a22[i][j] = sum22; a33[i][j] = sum33
-                a12[i][j] = sum12; a13[i][j] = sum13; a23[i][j] = sum23
+                a11[i][j] = sum11
+                a22[i][j] = sum22
+                a33[i][j] = sum33
+                a12[i][j] = sum12
+                a13[i][j] = sum13
+                a23[i][j] = sum23
             }
         }
 
@@ -246,7 +254,11 @@ class FEMBody {
         return elementMGE
     }
 
-    private fun calculateFE(pressure: Double, faceIndex: Int, faceNodesGlobal: List<Int>): DoubleArray {
+    private fun calculateFE(
+        pressure: Double,
+        faceIndex: Int,
+        faceNodesGlobal: List<Int>
+    ): DoubleArray {
         val elementFE = DoubleArray(60)
 
         val faceCoords = Array(8) { DoubleArray(3) }
@@ -259,17 +271,30 @@ class FEMBody {
 
         val dXYZdNT = Array(9) { Array(3) { DoubleArray(2) } }
         for (i in 0 until 9) {
-            var sumXEta = 0.0; var sumYEta = 0.0; var sumZEta = 0.0
-            var sumXTau = 0.0; var sumYTau = 0.0; var sumZTau = 0.0
+            var sumXEta = 0.0
+            var sumYEta = 0.0
+            var sumZEta = 0.0
+            var sumXTau = 0.0
+            var sumYTau = 0.0
+            var sumZTau = 0.0
             for (j in 0 until 8) {
                 val pt = faceCoords[j]
                 val dpsite = GaussConstants.dpsite[i][j]
-                sumXEta += pt[0] * dpsite[0]; sumYEta += pt[1] * dpsite[0]; sumZEta += pt[2] * dpsite[0]
-                sumXTau += pt[0] * dpsite[1]; sumYTau += pt[1] * dpsite[1]; sumZTau += pt[2] * dpsite[1]
+
+                sumXEta += pt[0] * dpsite[0]
+                sumYEta += pt[1] * dpsite[0]
+                sumZEta += pt[2] * dpsite[0]
+                sumXTau += pt[0] * dpsite[1]
+                sumYTau += pt[1] * dpsite[1]
+                sumZTau += pt[2] * dpsite[1]
             }
-            dXYZdNT[i][0][0] = sumXEta; dXYZdNT[i][0][1] = sumXTau
-            dXYZdNT[i][1][0] = sumYEta; dXYZdNT[i][1][1] = sumYTau
-            dXYZdNT[i][2][0] = sumZEta; dXYZdNT[i][2][1] = sumZTau
+
+            dXYZdNT[i][0][0] = sumXEta
+            dXYZdNT[i][0][1] = sumXTau
+            dXYZdNT[i][1][0] = sumYEta
+            dXYZdNT[i][1][1] = sumYTau
+            dXYZdNT[i][2][0] = sumZEta
+            dXYZdNT[i][2][1] = sumZTau
         }
 
         val fe1 = DoubleArray(8)
@@ -357,7 +382,11 @@ class FEMBody {
         }
     }
 
-    private fun multiplyBandMatrix(matrix: Array<DoubleArray>, x: DoubleArray, result: DoubleArray) {
+    private fun multiplyBandMatrix(
+        matrix: Array<DoubleArray>,
+        x: DoubleArray,
+        result: DoubleArray
+    ) {
         val n = x.size
         for (i in 0 until n) {
             result[i] = 0.0
@@ -375,6 +404,7 @@ class FEMBody {
             }
         }
     }
+
     private fun solveConjugateGradient(): DoubleArray {
         val n = fVec.size
         val u = DoubleArray(n) { 0.0 }
@@ -520,9 +550,15 @@ class FEMBody {
         val eps = 1e-10
 
         for (i in 0 until 27) {
-            var sumXA = 0.0; var sumXB = 0.0; var sumXG = 0.0
-            var sumYA = 0.0; var sumYB = 0.0; var sumYG = 0.0
-            var sumZA = 0.0; var sumZB = 0.0; var sumZG = 0.0
+            var sumXA = 0.0
+            var sumXB = 0.0
+            var sumXG = 0.0
+            var sumYA = 0.0
+            var sumYB = 0.0
+            var sumYG = 0.0
+            var sumZA = 0.0
+            var sumZB = 0.0
+            var sumZG = 0.0
 
             for (j in 0 until 20) {
                 val point = cubeCoords[j]
@@ -531,14 +567,26 @@ class FEMBody {
                 val dfb = GaussConstants.dfiabg[i][j][1]
                 val dfg = GaussConstants.dfiabg[i][j][2]
 
-                sumXA += point[0] * dfa; sumXB += point[0] * dfb; sumXG += point[0] * dfg
-                sumYA += point[1] * dfa; sumYB += point[1] * dfb; sumYG += point[1] * dfg
-                sumZA += point[2] * dfa; sumZB += point[2] * dfb; sumZG += point[2] * dfg
+                sumXA += point[0] * dfa
+                sumXB += point[0] * dfb
+                sumXG += point[0] * dfg
+                sumYA += point[1] * dfa
+                sumYB += point[1] * dfb
+                sumYG += point[1] * dfg
+                sumZA += point[2] * dfa
+                sumZB += point[2] * dfb
+                sumZG += point[2] * dfg
             }
 
-            dj[elementIndex][i][0][0] = cleanZero(sumXA, eps); dj[elementIndex][i][0][1] = cleanZero(sumYA, eps); dj[elementIndex][i][0][2] = cleanZero(sumZA, eps)
-            dj[elementIndex][i][1][0] = cleanZero(sumXB, eps); dj[elementIndex][i][1][1] = cleanZero(sumYB, eps); dj[elementIndex][i][1][2] = cleanZero(sumZB, eps)
-            dj[elementIndex][i][2][0] = cleanZero(sumXG, eps); dj[elementIndex][i][2][1] = cleanZero(sumYG, eps); dj[elementIndex][i][2][2] = cleanZero(sumZG, eps)
+            dj[elementIndex][i][0][0] = cleanZero(sumXA, eps)
+            dj[elementIndex][i][0][1] = cleanZero(sumYA, eps)
+            dj[elementIndex][i][0][2] = cleanZero(sumZA, eps)
+            dj[elementIndex][i][1][0] = cleanZero(sumXB, eps)
+            dj[elementIndex][i][1][1] = cleanZero(sumYB, eps)
+            dj[elementIndex][i][1][2] = cleanZero(sumZB, eps)
+            dj[elementIndex][i][2][0] = cleanZero(sumXG, eps)
+            dj[elementIndex][i][2][1] = cleanZero(sumYG, eps)
+            dj[elementIndex][i][2][2] = cleanZero(sumZG, eps)
 
             val d = dj[elementIndex][i]
             djDet[elementIndex][i] = d[0][0] * d[1][1] * d[2][2] +
@@ -573,14 +621,17 @@ class FEMBody {
                 val b1 = GaussConstants.dfiabg[i][j][1]
                 val b2 = GaussConstants.dfiabg[i][j][2]
 
-                val detX = b0 * d[1][1] * d[2][2] + d[0][1] * d[1][2] * b2 + d[0][2] * b1 * d[2][1] -
-                        d[0][2] * d[1][1] * b2 - b0 * d[1][2] * d[2][1] - d[0][1] * b1 * d[2][2]
+                val detX =
+                    b0 * d[1][1] * d[2][2] + d[0][1] * d[1][2] * b2 + d[0][2] * b1 * d[2][1] -
+                            d[0][2] * d[1][1] * b2 - b0 * d[1][2] * d[2][1] - d[0][1] * b1 * d[2][2]
 
-                val detY = d[0][0] * b1 * d[2][2] + b0 * d[1][2] * d[2][0] + d[0][2] * d[1][0] * b2 -
-                        d[0][2] * b1 * d[2][0] - d[0][0] * d[1][2] * b2 - b0 * d[1][0] * d[2][2]
+                val detY =
+                    d[0][0] * b1 * d[2][2] + b0 * d[1][2] * d[2][0] + d[0][2] * d[1][0] * b2 -
+                            d[0][2] * b1 * d[2][0] - d[0][0] * d[1][2] * b2 - b0 * d[1][0] * d[2][2]
 
-                val detZ = d[0][0] * d[1][1] * b2 + d[0][1] * b1 * d[2][0] + b0 * d[1][0] * d[2][1] -
-                        b0 * d[1][1] * d[2][0] - d[0][0] * b1 * d[2][1] - d[0][1] * d[1][0] * b2
+                val detZ =
+                    d[0][0] * d[1][1] * b2 + d[0][1] * b1 * d[2][0] + b0 * d[1][0] * d[2][1] -
+                            b0 * d[1][1] * d[2][0] - d[0][0] * b1 * d[2][1] - d[0][1] * d[1][0] * b2
 
                 dfixyz[elementIndex][i][j][0] = detX / det
                 dfixyz[elementIndex][i][j][1] = detY / det
