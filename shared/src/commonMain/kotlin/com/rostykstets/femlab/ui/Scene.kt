@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rostykstets.femlab.domain.ElementFace
@@ -120,13 +121,13 @@ private fun SceneContent(
     toggleFaceLoaded: (ElementFace) -> Unit,
 ) {
 
-    var sizeXText by remember(bodySize.x) { mutableStateOf(bodySize.x.toString()) }
-    var sizeYText by remember(bodySize.y) { mutableStateOf(bodySize.y.toString()) }
-    var sizeZText by remember(bodySize.z) { mutableStateOf(bodySize.z.toString()) }
+    var sizeX by remember(bodySize.x) { mutableStateOf(bodySize.x.toString()) }
+    var sizeY by remember(bodySize.y) { mutableStateOf(bodySize.y.toString()) }
+    var sizeZ by remember(bodySize.z) { mutableStateOf(bodySize.z.toString()) }
 
-    var splitXText by remember(bodySplits.x) { mutableStateOf(bodySplits.x.toInt().toString()) }
-    var splitYText by remember(bodySplits.y) { mutableStateOf(bodySplits.y.toInt().toString()) }
-    var splitZText by remember(bodySplits.z) { mutableStateOf(bodySplits.z.toInt().toString()) }
+    var splitX by remember(bodySplits.x) { mutableStateOf(bodySplits.x.toInt().toString()) }
+    var splitY by remember(bodySplits.y) { mutableStateOf(bodySplits.y.toInt().toString()) }
+    var splitZ by remember(bodySplits.z) { mutableStateOf(bodySplits.z.toInt().toString()) }
 
     val camera = remember { SimpleCamera() }
 
@@ -142,121 +143,40 @@ private fun SceneContent(
                 .padding(6.dp)
                 .fillMaxHeight()
         ) {
-            CustomText(
-                modifier = Modifier.padding(bottom = 2.dp),
-                text = stringResource(Res.string.dimensions),
-                fontSize = labelFontSize
-            )
 
-            OutlinedTextField(
-                value = sizeXText,
-                onValueChange = {
-                    sizeXText = it; it.toFloatOrNull()
-                    ?.let { v -> updateSize(bodySize.copy(x = v)) }
-                },
-                label = { CustomText(text = stringResource(Res.string.size_x)) },
-                singleLine = true,
-                enabled = !isCalculating
-            )
-
-            OutlinedTextField(
-                value = sizeYText,
-                onValueChange = {
-                    sizeYText = it; it.toFloatOrNull()
-                    ?.let { v -> updateSize(bodySize.copy(y = v)) }
-                },
-                label = { CustomText(text = stringResource(Res.string.size_y)) },
-                singleLine = true,
-                enabled = !isCalculating
-            )
-
-            OutlinedTextField(
-                value = sizeZText,
-                onValueChange = {
-                    sizeZText = it; it.toFloatOrNull()
-                    ?.let { v -> updateSize(bodySize.copy(z = v)) }
-                },
-                label = { CustomText(text = stringResource(Res.string.size_z)) },
-                singleLine = true,
-                enabled = !isCalculating
+            BodySizes(
+                sizeX = sizeX,
+                sizeY = sizeY,
+                sizeZ = sizeZ,
+                bodySize = bodySize,
+                labelFontSize = labelFontSize,
+                isCalculating = isCalculating,
+                updateSize = updateSize
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            CustomText(
-                modifier = Modifier.padding(bottom = 2.dp),
-                text = stringResource(Res.string.splits),
-                fontSize = labelFontSize
-            )
-
-            OutlinedTextField(
-                value = splitXText,
-                onValueChange = {
-                    splitXText = it; it.toFloatOrNull()
-                    ?.let { v -> updateSplits(bodySplits.copy(x = v)) }
-                },
-                label = { CustomText(text = stringResource(Res.string.split_x)) },
-                singleLine = true,
-                enabled = !isCalculating
-            )
-
-            OutlinedTextField(
-                value = splitYText,
-                onValueChange = {
-                    splitYText = it; it.toFloatOrNull()
-                    ?.let { v -> updateSplits(bodySplits.copy(y = v)) }
-                },
-                label = { CustomText(text = stringResource(Res.string.split_y)) },
-                singleLine = true,
-                enabled = !isCalculating
-            )
-
-            OutlinedTextField(
-                value = splitZText,
-                onValueChange = {
-                    splitZText = it
-                    it.toFloatOrNull()?.let { v -> updateSplits(bodySplits.copy(z = v)) }
-                },
-                label = { CustomText(text = stringResource(Res.string.split_z)) },
-                singleLine = true,
-                enabled = !isCalculating
+            BodySplits(
+                splitX = splitX,
+                splitY = splitY,
+                splitZ = splitZ,
+                labelFontSize = labelFontSize,
+                bodySplits = bodySplits,
+                isCalculating = isCalculating,
+                updateSplits = updateSplits
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            CustomText(
-                modifier = Modifier.padding(bottom = 2.dp),
-                text = stringResource(Res.string.parameters),
-                fontSize = labelFontSize
-            )
-
-            OutlinedTextField(
-                value = youngModule,
-                onValueChange = { updateYoungModule(it) },
-                label = { CustomText(text = stringResource(Res.string.young_module)) },
-                singleLine = true,
-                enabled = !isCalculating
-            )
-
-            OutlinedTextField(
-                value = poissonRatio,
-                onValueChange = { updatePoissonRatio(it) },
-                label = {
-                    CustomText(
-                        text = stringResource(Res.string.poisson_ratio),
-                        fontSize = 13.sp
-                    )
-                },
-                singleLine = true,
-                enabled = !isCalculating
-            )
-
-            OutlinedTextField(
-                value = pressure,
-                onValueChange = { updatePressure(it) },
-                label = { CustomText(text = stringResource(Res.string.pressure)) },
-                singleLine = true,
-                enabled = !isCalculating
+            Parameters(
+                youngModule = youngModule,
+                poissonRatio = poissonRatio,
+                pressure = pressure,
+                labelFontSize = labelFontSize,
+                isCalculating = isCalculating,
+                updateYoungModule = updateYoungModule,
+                updatePoissonRatio = updatePoissonRatio,
+                updatePressure = updatePressure
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -458,6 +378,183 @@ private fun SceneContent(
             InfoPanel(modifier = Modifier.align(Alignment.TopEnd))
         }
     }
+}
+
+@Composable
+private fun BodySizes(
+    sizeX: String,
+    sizeY: String,
+    sizeZ: String,
+    bodySize: Vector3,
+    labelFontSize: TextUnit,
+    isCalculating: Boolean,
+    updateSize: (Vector3) -> Unit
+) {
+
+    CustomText(
+        modifier = Modifier.padding(bottom = 2.dp),
+        text = stringResource(Res.string.dimensions),
+        fontSize = labelFontSize
+    )
+
+    BodySize(
+        size = sizeX,
+        sizeLabel = stringResource(Res.string.size_x),
+        isCalculating = isCalculating,
+        updateSize = { updateSize(bodySize.copy(x = it)) }
+    )
+
+    BodySize(
+        size = sizeY,
+        sizeLabel = stringResource(Res.string.size_y),
+        isCalculating = isCalculating,
+        updateSize = { updateSize(bodySize.copy(y = it)) }
+    )
+
+    BodySize(
+        size = sizeZ,
+        sizeLabel = stringResource(Res.string.size_z),
+        isCalculating = isCalculating,
+        updateSize = { updateSize(bodySize.copy(z = it)) }
+    )
+}
+
+@Composable
+private fun BodySize(
+    size: String,
+    sizeLabel: String,
+    isCalculating: Boolean,
+    updateSize: (Float) -> Unit
+) {
+
+    OutlinedTextField(
+        value = size,
+        onValueChange = {
+            it.toFloatOrNull()?.let { v -> updateSize(v) }
+        },
+        label = { CustomText(text = sizeLabel) },
+        singleLine = true,
+        enabled = !isCalculating
+    )
+}
+
+@Composable
+private fun BodySplits(
+    splitX: String,
+    splitY: String,
+    splitZ: String,
+    labelFontSize: TextUnit,
+    bodySplits: Vector3,
+    isCalculating: Boolean,
+    updateSplits: (Vector3) -> Unit
+) {
+
+    CustomText(
+        modifier = Modifier.padding(bottom = 2.dp),
+        text = stringResource(Res.string.splits),
+        fontSize = labelFontSize
+    )
+
+    BodySplit(
+        split = splitX,
+        splitLabel = stringResource(Res.string.split_x),
+        isCalculating = isCalculating,
+        updateSplit = {
+            updateSplits(bodySplits.copy(x = it))
+        })
+
+    BodySplit(
+        split = splitY,
+        splitLabel = stringResource(Res.string.split_y),
+        isCalculating = isCalculating,
+        updateSplit = {
+            updateSplits(bodySplits.copy(y = it))
+        })
+
+    BodySplit(
+        split = splitZ,
+        splitLabel = stringResource(Res.string.split_z),
+        isCalculating = isCalculating,
+        updateSplit = {
+            updateSplits(bodySplits.copy(z = it))
+        })
+}
+
+@Composable
+private fun BodySplit(
+    split: String,
+    splitLabel: String,
+    isCalculating: Boolean,
+    updateSplit: (Float) -> Unit
+) {
+    OutlinedTextField(
+        value = split,
+        onValueChange = {
+            it.toFloatOrNull()?.let { v -> updateSplit(v) }
+        },
+        label = { CustomText(text = splitLabel) },
+        singleLine = true,
+        enabled = !isCalculating
+    )
+}
+
+@Composable
+private fun Parameters(
+    youngModule: String,
+    poissonRatio: String,
+    pressure: String,
+    labelFontSize: TextUnit,
+    isCalculating: Boolean,
+    updateYoungModule: (String) -> Unit,
+    updatePoissonRatio: (String) -> Unit,
+    updatePressure: (String) -> Unit
+) {
+
+    CustomText(
+        modifier = Modifier.padding(bottom = 2.dp),
+        text = stringResource(Res.string.parameters),
+        fontSize = labelFontSize
+    )
+
+    Parameter(
+        parameter = youngModule,
+        parameterLabel = stringResource(Res.string.young_module),
+        isCalculating = isCalculating,
+        updateParameter = updateYoungModule
+    )
+
+    Parameter(
+        parameter = poissonRatio,
+        parameterLabel = stringResource(Res.string.poisson_ratio),
+        fontSize = 13.sp,
+        isCalculating = isCalculating,
+        updateParameter = updatePoissonRatio
+    )
+
+    Parameter(
+        parameter = pressure,
+        parameterLabel = stringResource(Res.string.pressure),
+        isCalculating = isCalculating,
+        updateParameter = updatePressure
+    )
+}
+
+@Composable
+private fun Parameter(
+    parameter: String,
+    parameterLabel: String,
+    fontSize: TextUnit = 14.sp,
+    isCalculating: Boolean,
+    updateParameter: (String) -> Unit
+) {
+
+    OutlinedTextField(
+        value = parameter,
+        onValueChange = { updateParameter(it) },
+        label = { CustomText(text = parameterLabel, fontSize = fontSize) },
+        singleLine = true,
+        enabled = !isCalculating
+    )
 }
 
 @Composable
