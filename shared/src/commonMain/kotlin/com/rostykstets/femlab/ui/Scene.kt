@@ -202,23 +202,25 @@ private fun SceneContent(
                 .fillMaxHeight()
                 .weight(1f)
                 .background(VeryLightGray2)
-                .pointerInput(bodySize, bodySplits) {
+                .pointerInput(bodySize, bodySplits, isCalculating) {
+
+                    if (isCalculating) return@pointerInput
+
                     detectTapGestures(
                         onTap = { clickOffset ->
-                            if (!isCalculating) {
-                                val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                                if (clickedFace != null) toggleFaceFixed(clickedFace)
-                            }
+                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+                            if (clickedFace != null) toggleFaceFixed(clickedFace)
                         },
                         onLongPress = { clickOffset ->
-                            if (!isCalculating) {
-                                val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                                if (clickedFace != null) toggleFaceLoaded(clickedFace)
-                            }
+                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+                            if (clickedFace != null) toggleFaceLoaded(clickedFace)
                         }
                     )
                 }
-                .pointerInput(Unit) {
+                .pointerInput(isCalculating) {
+
+                    if (isCalculating) return@pointerInput
+
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
@@ -260,7 +262,10 @@ private fun SceneContent(
                         }
                     }
                 }
-                .pointerInput(Unit) {
+                .pointerInput(isCalculating) {
+
+                    if (isCalculating) return@pointerInput
+
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
@@ -282,12 +287,6 @@ private fun SceneContent(
                     }
                 }
         ) {
-
-            if (isCalculating)
-                CircularProgressIndicator(
-                    color = Color.Yellow,
-                    modifier = Modifier.size(30.dp).align(alignment = Alignment.Center)
-                )
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val w = size.width
@@ -374,6 +373,8 @@ private fun SceneContent(
                     drawCircle(color = PureBlue, radius = 4.5f, center = screenPt)
                 }
             }
+
+            if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
             InfoPanel(modifier = Modifier.align(Alignment.TopEnd))
         }
@@ -555,6 +556,20 @@ private fun Parameter(
         singleLine = true,
         enabled = !isCalculating
     )
+}
+
+@Composable
+private fun CalculatingIndicator(modifier: Modifier) {
+    Box(
+        modifier = modifier
+            .background(color = Color.Gray.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            color = Color.Yellow,
+            modifier = Modifier.size(30.dp)
+        )
+    }
 }
 
 @Composable
