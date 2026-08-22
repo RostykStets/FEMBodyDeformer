@@ -40,6 +40,7 @@ import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rostykstets.femlab.domain.ElementFace
@@ -54,6 +55,8 @@ import femlab.shared.generated.resources.axis_x
 import femlab.shared.generated.resources.axis_y
 import femlab.shared.generated.resources.axis_z
 import femlab.shared.generated.resources.baloo_bhai_2_regular
+import femlab.shared.generated.resources.calculate
+import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
 import femlab.shared.generated.resources.parameters
 import femlab.shared.generated.resources.poisson_ratio
@@ -85,6 +88,42 @@ fun Scene() {
     val deformedBody by viewModel.deformedBody.collectAsState()
     val isCalculating by viewModel.isCalculating.collectAsState()
 
+    SceneContent(
+        bodySize = bodySize,
+        bodySplits = bodySplits,
+        youngModule = youngModule,
+        poissonRatio = poissonRatio,
+        pressure = pressure,
+        deformedBody = deformedBody,
+        isCalculating = isCalculating,
+        femBody = viewModel.femBody,
+        updateSize = viewModel::updateSize,
+        updateSplits = viewModel::updateSplits,
+        updateYoungModule = viewModel::updateYoungModule,
+        updatePoissonRatio = viewModel::updatePoissonRatio,
+        updatePressure = viewModel::updatePressure,
+        calculate = viewModel::calculate,
+        toggleFaceFixed = viewModel::toggleFaceFixed,
+        toggleFaceLoaded = viewModel::toggleFaceLoaded
+    )
+}
+
+@Composable
+private fun SceneContent(
+    bodySize: Vector3, bodySplits: Vector3, youngModule: String,
+    poissonRatio: String, pressure: String,
+    deformedBody: DoubleArray?, isCalculating: Boolean,
+    femBody: FEMBody,
+    updateSize: (Vector3) -> Unit,
+    updateSplits: (Vector3) -> Unit,
+    updateYoungModule: (String) -> Unit,
+    updatePoissonRatio: (String) -> Unit,
+    updatePressure: (String) -> Unit,
+    calculate: () -> Unit,
+    toggleFaceFixed: (ElementFace) -> Unit,
+    toggleFaceLoaded: (ElementFace) -> Unit,
+) {
+
     var sizeXText by remember(bodySize.x) { mutableStateOf(bodySize.x.toString()) }
     var sizeYText by remember(bodySize.y) { mutableStateOf(bodySize.y.toString()) }
     var sizeZText by remember(bodySize.z) { mutableStateOf(bodySize.z.toString()) }
@@ -114,7 +153,7 @@ fun Scene() {
                 value = sizeXText,
                 onValueChange = {
                     sizeXText = it; it.toFloatOrNull()
-                    ?.let { v -> viewModel.updateSize(bodySize.copy(x = v)) }
+                    ?.let { v -> updateSize(bodySize.copy(x = v)) }
                 },
                 label = { Text(stringResource(Res.string.size_x)) },
                 singleLine = true,
@@ -124,7 +163,7 @@ fun Scene() {
                 value = sizeYText,
                 onValueChange = {
                     sizeYText = it; it.toFloatOrNull()
-                    ?.let { v -> viewModel.updateSize(bodySize.copy(y = v)) }
+                    ?.let { v -> updateSize(bodySize.copy(y = v)) }
                 },
                 label = { Text(stringResource(Res.string.size_y)) },
                 singleLine = true,
@@ -134,7 +173,7 @@ fun Scene() {
                 value = sizeZText,
                 onValueChange = {
                     sizeZText = it; it.toFloatOrNull()
-                    ?.let { v -> viewModel.updateSize(bodySize.copy(z = v)) }
+                    ?.let { v -> updateSize(bodySize.copy(z = v)) }
                 },
                 label = { Text(stringResource(Res.string.size_z)) },
                 singleLine = true,
@@ -150,7 +189,7 @@ fun Scene() {
                 value = splitXText,
                 onValueChange = {
                     splitXText = it; it.toFloatOrNull()
-                    ?.let { v -> viewModel.updateSplits(bodySplits.copy(x = v)) }
+                    ?.let { v -> updateSplits(bodySplits.copy(x = v)) }
                 },
                 label = { Text(stringResource(Res.string.split_x)) },
                 singleLine = true,
@@ -160,7 +199,7 @@ fun Scene() {
                 value = splitYText,
                 onValueChange = {
                     splitYText = it; it.toFloatOrNull()
-                    ?.let { v -> viewModel.updateSplits(bodySplits.copy(y = v)) }
+                    ?.let { v -> updateSplits(bodySplits.copy(y = v)) }
                 },
                 label = { Text(stringResource(Res.string.split_y)) },
                 singleLine = true,
@@ -170,7 +209,7 @@ fun Scene() {
                 value = splitZText,
                 onValueChange = {
                     splitZText = it; it.toFloatOrNull()
-                    ?.let { v -> viewModel.updateSplits(bodySplits.copy(z = v)) }
+                    ?.let { v -> updateSplits(bodySplits.copy(z = v)) }
                 },
                 label = { Text(stringResource(Res.string.split_z)) },
                 singleLine = true,
@@ -184,21 +223,21 @@ fun Scene() {
             )
             OutlinedTextField(
                 value = youngModule,
-                onValueChange = { viewModel.updateYoungModule(it) },
+                onValueChange = { updateYoungModule(it) },
                 label = { Text(stringResource(Res.string.young_module)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
             OutlinedTextField(
                 value = poissonRatio,
-                onValueChange = { viewModel.updatePoissonRatio(it) },
+                onValueChange = { updatePoissonRatio(it) },
                 label = { Text(stringResource(Res.string.poisson_ratio)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
             OutlinedTextField(
                 value = pressure,
-                onValueChange = { viewModel.updatePressure(it) },
+                onValueChange = { updatePressure(it) },
                 label = { Text(stringResource(Res.string.pressure)) },
                 singleLine = true,
                 enabled = !isCalculating
@@ -207,12 +246,16 @@ fun Scene() {
             Spacer(modifier = Modifier.height(14.dp))
 
             Button(
-                onClick = { viewModel.calculate() },
+                onClick = calculate,
                 enabled = !isCalculating,
                 modifier = Modifier.fillMaxWidth().height(42.dp),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text(text = if (isCalculating) "Рахую..." else "Обчислити", fontSize = 13.sp)
+                Text(
+                    text = if (isCalculating) stringResource(Res.string.calculating) else
+                        stringResource(Res.string.calculate),
+                    fontSize = 13.sp
+                )
             }
         }
 
@@ -228,13 +271,13 @@ fun Scene() {
                         onTap = { clickOffset ->
                             if (!isCalculating) {
                                 val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                                if (clickedFace != null) viewModel.toggleFaceFixed(clickedFace)
+                                if (clickedFace != null) toggleFaceFixed(clickedFace)
                             }
                         },
                         onLongPress = { clickOffset ->
                             if (!isCalculating) {
                                 val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                                if (clickedFace != null) viewModel.toggleFaceLoaded(clickedFace)
+                                if (clickedFace != null) toggleFaceLoaded(clickedFace)
                             }
                         }
                     )
@@ -327,13 +370,13 @@ fun Scene() {
                 drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
 
                 projectedFacesList.clear()
-                for (face in viewModel.femBody.externalFaces) {
+                for (face in femBody.externalFaces) {
                     val faceNodes =
-                        viewModel.femBody.getNodesForFace(face.elementId, face.faceIndex)
+                        femBody.getNodesForFace(face.elementId, face.faceIndex)
                     val screenPts = faceNodes.take(4).map { gId ->
-                        val mx = viewModel.femBody.getX(gId).toFloat()
-                        val my = viewModel.femBody.getY(gId).toFloat()
-                        val mz = viewModel.femBody.getZ(gId).toFloat()
+                        val mx = femBody.getX(gId).toFloat()
+                        val my = femBody.getY(gId).toFloat()
+                        val mz = femBody.getZ(gId).toFloat()
                         camera.project(Vector3(mx, mz, -my), w, h, baseScale)
                     }
                     val diag1 = (screenPts[0] - screenPts[2]).getDistance()
@@ -343,8 +386,8 @@ fun Scene() {
 
                 val renderingOrder = projectedFacesList.sortedBy { it.averageDepth }
                 for (projected in renderingOrder) {
-                    val isFixed = viewModel.femBody.fixedFaces.contains(projected.face)
-                    val isLoaded = viewModel.femBody.loadedFaces.contains(projected.face)
+                    val isFixed = femBody.fixedFaces.contains(projected.face)
+                    val isLoaded = femBody.loadedFaces.contains(projected.face)
 
                     if (isFixed || isLoaded) {
                         val path = Path().apply {
@@ -364,7 +407,7 @@ fun Scene() {
                 }
 
                 drawBody(
-                    viewModel.femBody,
+                    femBody,
                     camera,
                     w,
                     h,
@@ -375,7 +418,7 @@ fun Scene() {
 
                 if (deformedBody != null) {
                     drawBody(
-                        viewModel.femBody,
+                        femBody,
                         camera,
                         w,
                         h,
@@ -385,10 +428,10 @@ fun Scene() {
                     )
                 }
 
-                for (nodeId in 1..viewModel.femBody.nqp) {
-                    val mscX = viewModel.femBody.getX(nodeId).toFloat()
-                    val mscY = viewModel.femBody.getY(nodeId).toFloat()
-                    val mscZ = viewModel.femBody.getZ(nodeId).toFloat()
+                for (nodeId in 1..femBody.nqp) {
+                    val mscX = femBody.getX(nodeId).toFloat()
+                    val mscY = femBody.getY(nodeId).toFloat()
+                    val mscZ = femBody.getZ(nodeId).toFloat()
 
                     val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), w, h, baseScale)
 
@@ -444,9 +487,10 @@ fun Scene() {
             }
         }
     }
+
 }
 
-fun DrawScope.drawBody(
+private fun DrawScope.drawBody(
     body: FEMBody,
     camera: SimpleCamera,
     w: Float,
@@ -513,7 +557,8 @@ fun DrawScope.drawBody(
         }
     }
 }
-fun findClickedFace(click: Offset, projectedFaces: List<ProjectedFace>): ElementFace? {
+
+private fun findClickedFace(click: Offset, projectedFaces: List<ProjectedFace>): ElementFace? {
 
     val sortedFaces = projectedFaces.sortedByDescending { it.averageDepth }
 
@@ -526,7 +571,7 @@ fun findClickedFace(click: Offset, projectedFaces: List<ProjectedFace>): Element
     return null
 }
 
-fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
+private fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
     var inside = false
     var j = poly.size - 1
     for (i in poly.indices) {
@@ -538,4 +583,30 @@ fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
         j = i
     }
     return inside
+}
+
+@Preview(
+    widthDp = 1200,
+    heightDp = 540
+)
+@Composable
+private fun ScenePreview() {
+    SceneContent(
+        bodySize = Vector3(4f, 4f, 4f),
+        bodySplits = Vector3(2f, 1f, 2f),
+        youngModule = "4",
+        poissonRatio = "0.3",
+        pressure = "2",
+        deformedBody = null,
+        isCalculating = false,
+        femBody = FEMBody(),
+        updateSize = {},
+        updateSplits = {},
+        updateYoungModule = {},
+        updatePoissonRatio = {},
+        updatePressure = {},
+        calculate = {},
+        toggleFaceFixed = {},
+        toggleFaceLoaded = {}
+    )
 }

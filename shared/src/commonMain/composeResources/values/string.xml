@@ -16,4 +16,6 @@
     <string name="poisson_ratio">Коефіцієнт Пуассона:</string>
     <string name="pressure">Напруження:</string>
     <string name="show_indexes">Показати індекси</string>
+    <string name="calculating">Рахую...</string>
+    <string name="calculate">Обчислити</string>
 </resources>
