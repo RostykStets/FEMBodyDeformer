@@ -21,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,14 +37,13 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rostykstets.femlab.domain.ElementFace
 import com.rostykstets.femlab.domain.FEMBody
 import com.rostykstets.femlab.domain.ProjectedFace
+import com.rostykstets.femlab.ui.components.CustomText
 import com.rostykstets.femlab.ui.components.PureBlue
 import com.rostykstets.femlab.ui.components.VeryLightGray
 import com.rostykstets.femlab.ui.components.VeryLightGray2
@@ -54,7 +52,6 @@ import femlab.shared.generated.resources.axes
 import femlab.shared.generated.resources.axis_x
 import femlab.shared.generated.resources.axis_y
 import femlab.shared.generated.resources.axis_z
-import femlab.shared.generated.resources.baloo_bhai_2_regular
 import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
@@ -69,7 +66,6 @@ import femlab.shared.generated.resources.split_y
 import femlab.shared.generated.resources.split_z
 import femlab.shared.generated.resources.splits
 import femlab.shared.generated.resources.young_module
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -133,7 +129,8 @@ private fun SceneContent(
     var splitZText by remember(bodySplits.z) { mutableStateOf(bodySplits.z.toInt().toString()) }
 
     val camera = remember { SimpleCamera() }
-    val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
+
+    val labelFontSize = 18.sp
 
     Row(modifier = Modifier.fillMaxSize()) {
 
@@ -145,100 +142,119 @@ private fun SceneContent(
                 .padding(6.dp)
                 .fillMaxHeight()
         ) {
-            Text(
+            CustomText(
+                modifier = Modifier.padding(bottom = 2.dp),
                 text = stringResource(Res.string.dimensions),
-                modifier = Modifier.padding(bottom = 2.dp)
+                fontSize = labelFontSize
             )
+
             OutlinedTextField(
                 value = sizeXText,
                 onValueChange = {
                     sizeXText = it; it.toFloatOrNull()
                     ?.let { v -> updateSize(bodySize.copy(x = v)) }
                 },
-                label = { Text(stringResource(Res.string.size_x)) },
+                label = { CustomText(text = stringResource(Res.string.size_x)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
+
             OutlinedTextField(
                 value = sizeYText,
                 onValueChange = {
                     sizeYText = it; it.toFloatOrNull()
                     ?.let { v -> updateSize(bodySize.copy(y = v)) }
                 },
-                label = { Text(stringResource(Res.string.size_y)) },
+                label = { CustomText(text = stringResource(Res.string.size_y)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
+
             OutlinedTextField(
                 value = sizeZText,
                 onValueChange = {
                     sizeZText = it; it.toFloatOrNull()
                     ?.let { v -> updateSize(bodySize.copy(z = v)) }
                 },
-                label = { Text(stringResource(Res.string.size_z)) },
+                label = { CustomText(text = stringResource(Res.string.size_z)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
+
+            CustomText(
+                modifier = Modifier.padding(bottom = 2.dp),
                 text = stringResource(Res.string.splits),
-                modifier = Modifier.padding(bottom = 2.dp)
+                fontSize = labelFontSize
             )
+
             OutlinedTextField(
                 value = splitXText,
                 onValueChange = {
                     splitXText = it; it.toFloatOrNull()
                     ?.let { v -> updateSplits(bodySplits.copy(x = v)) }
                 },
-                label = { Text(stringResource(Res.string.split_x)) },
+                label = { CustomText(text = stringResource(Res.string.split_x)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
+
             OutlinedTextField(
                 value = splitYText,
                 onValueChange = {
                     splitYText = it; it.toFloatOrNull()
                     ?.let { v -> updateSplits(bodySplits.copy(y = v)) }
                 },
-                label = { Text(stringResource(Res.string.split_y)) },
+                label = { CustomText(text = stringResource(Res.string.split_y)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
+
             OutlinedTextField(
                 value = splitZText,
                 onValueChange = {
-                    splitZText = it; it.toFloatOrNull()
-                    ?.let { v -> updateSplits(bodySplits.copy(z = v)) }
+                    splitZText = it
+                    it.toFloatOrNull()?.let { v -> updateSplits(bodySplits.copy(z = v)) }
                 },
-                label = { Text(stringResource(Res.string.split_z)) },
+                label = { CustomText(text = stringResource(Res.string.split_z)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
+
+            CustomText(
+                modifier = Modifier.padding(bottom = 2.dp),
                 text = stringResource(Res.string.parameters),
-                modifier = Modifier.padding(bottom = 2.dp)
+                fontSize = labelFontSize
             )
+
             OutlinedTextField(
                 value = youngModule,
                 onValueChange = { updateYoungModule(it) },
-                label = { Text(stringResource(Res.string.young_module)) },
+                label = { CustomText(text = stringResource(Res.string.young_module)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
+
             OutlinedTextField(
                 value = poissonRatio,
                 onValueChange = { updatePoissonRatio(it) },
-                label = { Text(stringResource(Res.string.poisson_ratio)) },
+                label = {
+                    CustomText(
+                        text = stringResource(Res.string.poisson_ratio),
+                        fontSize = 13.sp
+                    )
+                },
                 singleLine = true,
                 enabled = !isCalculating
             )
+
             OutlinedTextField(
                 value = pressure,
                 onValueChange = { updatePressure(it) },
-                label = { Text(stringResource(Res.string.pressure)) },
+                label = { CustomText(text = stringResource(Res.string.pressure)) },
                 singleLine = true,
                 enabled = !isCalculating
             )
@@ -251,10 +267,10 @@ private fun SceneContent(
                 modifier = Modifier.fillMaxWidth().height(42.dp),
                 shape = RoundedCornerShape(6.dp)
             ) {
-                Text(
+                CustomText(
                     text = if (isCalculating) stringResource(Res.string.calculating) else
                         stringResource(Res.string.calculate),
-                    fontSize = 13.sp
+                    color = if (isCalculating) Color.Black else Color.White
                 )
             }
         }
@@ -439,13 +455,13 @@ private fun SceneContent(
                 }
             }
 
-            InfoPanel(modifier = Modifier.align(Alignment.TopEnd), customFontFamily)
+            InfoPanel(modifier = Modifier.align(Alignment.TopEnd))
         }
     }
 }
 
 @Composable
-private fun InfoPanel(modifier: Modifier, customFontFamily: FontFamily) {
+private fun InfoPanel(modifier: Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -458,37 +474,34 @@ private fun InfoPanel(modifier: Modifier, customFontFamily: FontFamily) {
                 .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
                 .padding(8.dp)
         ) {
-            Text(
-                stringResource(Res.string.axes),
-                style = TextStyle(fontSize = 11.sp, color = Color.Gray),
-                modifier = Modifier.padding(bottom = 4.dp)
+            CustomText(
+                modifier = Modifier.padding(bottom = 4.dp),
+                text = stringResource(Res.string.axes),
+                fontSize = 13.sp,
+                color = Color.Gray
             )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red)); Spacer(
-                modifier = Modifier.width(6.dp)
-            )
-                Text(
-                    stringResource(Res.string.axis_x),
-                    style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                )
+                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                CustomText(text = stringResource(Res.string.axis_x))
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                CustomText(text = stringResource(Res.string.axis_y))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green)); Spacer(
-                modifier = Modifier.width(6.dp)
-            )
-                Text(
-                    stringResource(Res.string.axis_y),
-                    style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue)); Spacer(
-                modifier = Modifier.width(6.dp)
-            )
-                Text(
-                    stringResource(Res.string.axis_z),
-                    style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                )
+                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                CustomText(text = stringResource(Res.string.axis_z))
             }
         }
     }
