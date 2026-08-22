@@ -288,96 +288,163 @@ private fun SceneContent(
                 }
         ) {
 
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val w = size.width
-                val h = size.height
-                if (w <= 0f || h <= 0f) return@Canvas
-
-                val baseScale = minOf(w, h) / 12f
-
-                val p0 = camera.project(Vector3(0f, 0f, 0f), w, h, baseScale)
-                val pX = camera.project(Vector3(2f, 0f, 0f), w, h, baseScale)
-                val pY = camera.project(Vector3(0f, 0f, -2f), w, h, baseScale)
-                val pZ = camera.project(Vector3(0f, 2f, 0f), w, h, baseScale)
-
-                drawLine(Color.Red, p0, pX, strokeWidth = 4f)
-                drawLine(Color.Green, p0, pY, strokeWidth = 4f)
-                drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
-
-                projectedFacesList.clear()
-                for (face in femBody.externalFaces) {
-                    val faceNodes =
-                        femBody.getNodesForFace(face.elementId, face.faceIndex)
-                    val screenPts = faceNodes.take(4).map { gId ->
-                        val mx = femBody.getX(gId).toFloat()
-                        val my = femBody.getY(gId).toFloat()
-                        val mz = femBody.getZ(gId).toFloat()
-                        camera.project(Vector3(mx, mz, -my), w, h, baseScale)
-                    }
-                    val diag1 = (screenPts[0] - screenPts[2]).getDistance()
-                    val diag2 = (screenPts[1] - screenPts[3]).getDistance()
-                    projectedFacesList.add(ProjectedFace(face, screenPts, diag1 + diag2))
-                }
-
-                val renderingOrder = projectedFacesList.sortedBy { it.averageDepth }
-                for (projected in renderingOrder) {
-                    val isFixed = femBody.fixedFaces.contains(projected.face)
-                    val isLoaded = femBody.loadedFaces.contains(projected.face)
-
-                    if (isFixed || isLoaded) {
-                        val path = Path().apply {
-                            moveTo(projected.vertices[0].x, projected.vertices[0].y)
-                            lineTo(projected.vertices[1].x, projected.vertices[1].y)
-                            lineTo(projected.vertices[2].x, projected.vertices[2].y)
-                            lineTo(projected.vertices[3].x, projected.vertices[3].y)
-                            close()
-                        }
-                        drawPath(
-                            path = path,
-                            color = if (isFixed) Color.Gray.copy(alpha = 0.7f) else Color.Green.copy(
-                                alpha = 0.6f
-                            )
-                        )
-                    }
-                }
-
-                drawBody(
-                    femBody,
-                    camera,
-                    w,
-                    h,
-                    baseScale,
-                    isDeformed = false,
-                    deformedCoords = null
-                )
-
-                if (deformedBody != null) {
-                    drawBody(
-                        femBody,
-                        camera,
-                        w,
-                        h,
-                        baseScale,
-                        isDeformed = true,
-                        deformedCoords = deformedBody
-                    )
-                }
-
-                for (nodeId in 1..femBody.nqp) {
-                    val mscX = femBody.getX(nodeId).toFloat()
-                    val mscY = femBody.getY(nodeId).toFloat()
-                    val mscZ = femBody.getZ(nodeId).toFloat()
-
-                    val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), w, h, baseScale)
-
-                    drawCircle(color = PureBlue, radius = 4.5f, center = screenPt)
-                }
-            }
+            RenderBody(
+                femBody = femBody,
+                deformedBody = deformedBody,
+                projectedFacesList = projectedFacesList,
+                camera = camera
+            )
 
             if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
             InfoPanel(modifier = Modifier.align(Alignment.TopEnd))
         }
+    }
+}
+
+@Composable
+private fun RenderBody(
+    femBody: FEMBody,
+    deformedBody: DoubleArray?,
+    projectedFacesList: MutableList<ProjectedFace>,
+    camera: SimpleCamera
+) {
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+        if (w <= 0f || h <= 0f) return@Canvas
+
+        val baseScale = minOf(w, h) / 12f
+
+        val p0 = camera.project(Vector3(0f, 0f, 0f), w, h, baseScale)
+        val pX = camera.project(Vector3(2f, 0f, 0f), w, h, baseScale)
+        val pY = camera.project(Vector3(0f, 0f, -2f), w, h, baseScale)
+        val pZ = camera.project(Vector3(0f, 2f, 0f), w, h, baseScale)
+
+        drawLine(Color.Red, p0, pX, strokeWidth = 4f)
+        drawLine(Color.Green, p0, pY, strokeWidth = 4f)
+        drawLine(Color.Blue, p0, pZ, strokeWidth = 4f)
+
+        projectedFacesList.clear()
+
+        drawFaces(
+            femBody = femBody,
+            camera = camera,
+            width = w,
+            height = h,
+            baseScale = baseScale,
+            projectedFacesList = projectedFacesList
+        )
+
+        val renderingOrder = projectedFacesList.sortedBy { it.averageDepth }
+
+        drawBoundaryFaces(
+            femBody = femBody,
+            renderingOrder = renderingOrder,
+            drawPath = { path, color -> drawPath(path = path, color = color) }
+        )
+
+        drawBody(
+            femBody,
+            camera,
+            w,
+            h,
+            baseScale,
+            isDeformed = false,
+            deformedCoords = null
+        )
+
+        if (deformedBody != null) {
+            drawBody(
+                femBody,
+                camera,
+                w,
+                h,
+                baseScale,
+                isDeformed = true,
+                deformedCoords = deformedBody
+            )
+        }
+
+        drawNodes(
+            femBody = femBody,
+            camera = camera,
+            width = w,
+            height = h,
+            baseScale = baseScale,
+            drawCircle = { centerPt -> drawCircle(color = PureBlue, radius = 4.5f, center = centerPt) }
+        )
+    }
+}
+
+private fun drawFaces(
+    femBody: FEMBody,
+    camera: SimpleCamera,
+    projectedFacesList: MutableList<ProjectedFace>,
+    width: Float,
+    height: Float,
+    baseScale: Float
+) {
+    for (face in femBody.externalFaces) {
+        val faceNodes =
+            femBody.getNodesForFace(face.elementId, face.faceIndex)
+        val screenPts = faceNodes.take(4).map { gId ->
+            val mx = femBody.getX(gId).toFloat()
+            val my = femBody.getY(gId).toFloat()
+            val mz = femBody.getZ(gId).toFloat()
+            camera.project(Vector3(mx, mz, -my), width, height, baseScale)
+        }
+        val diag1 = (screenPts[0] - screenPts[2]).getDistance()
+        val diag2 = (screenPts[1] - screenPts[3]).getDistance()
+        projectedFacesList.add(ProjectedFace(face, screenPts, diag1 + diag2))
+    }
+}
+
+private fun drawBoundaryFaces(
+    femBody: FEMBody,
+    renderingOrder: List<ProjectedFace>,
+    drawPath: (Path, Color) -> Unit
+) {
+
+    for (projected in renderingOrder) {
+        val isFixed = femBody.fixedFaces.contains(projected.face)
+        val isLoaded = femBody.loadedFaces.contains(projected.face)
+
+        if (!isFixed && !isLoaded) continue
+
+        val path = Path().apply {
+            moveTo(projected.vertices[0].x, projected.vertices[0].y)
+            lineTo(projected.vertices[1].x, projected.vertices[1].y)
+            lineTo(projected.vertices[2].x, projected.vertices[2].y)
+            lineTo(projected.vertices[3].x, projected.vertices[3].y)
+            close()
+        }
+
+        val color = if (isFixed) Color.Gray.copy(alpha = 0.7f) else Color.Green.copy(
+            alpha = 0.6f
+        )
+
+        drawPath(path, color)
+    }
+}
+
+private fun drawNodes(
+    femBody: FEMBody,
+    camera: SimpleCamera,
+    width: Float,
+    height: Float,
+    baseScale: Float,
+    drawCircle: (Offset) -> Unit
+) {
+    for (nodeId in 1..femBody.nqp) {
+        val mscX = femBody.getX(nodeId).toFloat()
+        val mscY = femBody.getY(nodeId).toFloat()
+        val mscZ = femBody.getZ(nodeId).toFloat()
+
+        val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), width, height, baseScale)
+
+        drawCircle(screenPt)
     }
 }
 
