@@ -439,55 +439,59 @@ private fun SceneContent(
                 }
             }
 
-            Column(
-                modifier = Modifier.align(Alignment.TopEnd),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(top = 12.dp, end = 12.dp)
-                        .width(150.dp)
-                        .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-                        .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        stringResource(Res.string.axes),
-                        style = TextStyle(fontSize = 11.sp, color = Color.Gray),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red)); Spacer(
-                        modifier = Modifier.width(6.dp)
-                    )
-                        Text(
-                            stringResource(Res.string.axis_x),
-                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green)); Spacer(
-                        modifier = Modifier.width(6.dp)
-                    )
-                        Text(
-                            stringResource(Res.string.axis_y),
-                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue)); Spacer(
-                        modifier = Modifier.width(6.dp)
-                    )
-                        Text(
-                            stringResource(Res.string.axis_z),
-                            style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
-                        )
-                    }
-                }
+            InfoPanel(modifier = Modifier.align(Alignment.TopEnd), customFontFamily)
+        }
+    }
+}
+
+@Composable
+private fun InfoPanel(modifier: Modifier, customFontFamily: FontFamily) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(top = 12.dp, end = 12.dp)
+                .width(150.dp)
+                .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+                .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
+                .padding(8.dp)
+        ) {
+            Text(
+                stringResource(Res.string.axes),
+                style = TextStyle(fontSize = 11.sp, color = Color.Gray),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red)); Spacer(
+                modifier = Modifier.width(6.dp)
+            )
+                Text(
+                    stringResource(Res.string.axis_x),
+                    style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green)); Spacer(
+                modifier = Modifier.width(6.dp)
+            )
+                Text(
+                    stringResource(Res.string.axis_y),
+                    style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue)); Spacer(
+                modifier = Modifier.width(6.dp)
+            )
+                Text(
+                    stringResource(Res.string.axis_z),
+                    style = TextStyle(fontSize = 12.sp, fontFamily = customFontFamily)
+                )
             }
         }
     }
-
 }
 
 private fun DrawScope.drawBody(
