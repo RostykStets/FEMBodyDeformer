@@ -131,69 +131,28 @@ private fun SceneContent(
 
     val camera = remember { SimpleCamera() }
 
-    val labelFontSize = 18.sp
-
     Row(modifier = Modifier.fillMaxSize()) {
 
-        Column(
-            modifier = Modifier
-                .width(180.dp)
-                .background(color = Color.White)
-                .verticalScroll(rememberScrollState())
-                .padding(6.dp)
-                .fillMaxHeight()
-        ) {
-
-            BodySizes(
-                sizeX = sizeX,
-                sizeY = sizeY,
-                sizeZ = sizeZ,
-                bodySize = bodySize,
-                labelFontSize = labelFontSize,
-                isCalculating = isCalculating,
-                updateSize = updateSize
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            BodySplits(
-                splitX = splitX,
-                splitY = splitY,
-                splitZ = splitZ,
-                labelFontSize = labelFontSize,
-                bodySplits = bodySplits,
-                isCalculating = isCalculating,
-                updateSplits = updateSplits
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Parameters(
-                youngModule = youngModule,
-                poissonRatio = poissonRatio,
-                pressure = pressure,
-                labelFontSize = labelFontSize,
-                isCalculating = isCalculating,
-                updateYoungModule = updateYoungModule,
-                updatePoissonRatio = updatePoissonRatio,
-                updatePressure = updatePressure
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Button(
-                onClick = calculate,
-                enabled = !isCalculating,
-                modifier = Modifier.fillMaxWidth().height(42.dp),
-                shape = RoundedCornerShape(6.dp)
-            ) {
-                CustomText(
-                    text = if (isCalculating) stringResource(Res.string.calculating) else
-                        stringResource(Res.string.calculate),
-                    color = if (isCalculating) Color.Black else Color.White
-                )
-            }
-        }
+        ControlPanel(
+            sizeX = sizeX,
+            sizeY = sizeY,
+            sizeZ = sizeZ,
+            splitX = splitX,
+            splitY = splitY,
+            splitZ = splitZ,
+            bodySize = bodySize,
+            bodySplits = bodySplits,
+            youngModule = youngModule,
+            poissonRatio = poissonRatio,
+            pressure = pressure,
+            isCalculating = isCalculating,
+            updateSize = updateSize,
+            updateSplits = updateSplits,
+            updateYoungModule = updateYoungModule,
+            updatePoissonRatio = updatePoissonRatio,
+            updatePressure = updatePressure,
+            calculate = calculate
+        )
 
         val projectedFacesList = remember { mutableStateListOf<ProjectedFace>() }
 
@@ -445,6 +404,91 @@ private fun drawNodes(
         val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), width, height, baseScale)
 
         drawCircle(screenPt)
+    }
+}
+
+@Composable
+private fun ControlPanel(
+    sizeX: String,
+    sizeY: String,
+    sizeZ: String,
+    splitX: String,
+    splitY: String,
+    splitZ: String,
+    youngModule: String,
+    poissonRatio: String,
+    pressure: String,
+    bodySize: Vector3,
+    bodySplits: Vector3,
+    isCalculating: Boolean,
+    updateSize: (Vector3) -> Unit,
+    updateSplits: (Vector3) -> Unit,
+    updateYoungModule: (String) -> Unit,
+    updatePoissonRatio: (String) -> Unit,
+    updatePressure: (String) -> Unit,
+    calculate: () -> Unit
+) {
+
+    val labelFontSize = 18.sp
+
+    Column(
+        modifier = Modifier
+            .width(180.dp)
+            .background(color = Color.White)
+            .verticalScroll(rememberScrollState())
+            .padding(6.dp)
+            .fillMaxHeight()
+    ) {
+
+        BodySizes(
+            sizeX = sizeX,
+            sizeY = sizeY,
+            sizeZ = sizeZ,
+            bodySize = bodySize,
+            labelFontSize = labelFontSize,
+            isCalculating = isCalculating,
+            updateSize = updateSize
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        BodySplits(
+            splitX = splitX,
+            splitY = splitY,
+            splitZ = splitZ,
+            labelFontSize = labelFontSize,
+            bodySplits = bodySplits,
+            isCalculating = isCalculating,
+            updateSplits = updateSplits
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Parameters(
+            youngModule = youngModule,
+            poissonRatio = poissonRatio,
+            pressure = pressure,
+            labelFontSize = labelFontSize,
+            isCalculating = isCalculating,
+            updateYoungModule = updateYoungModule,
+            updatePoissonRatio = updatePoissonRatio,
+            updatePressure = updatePressure
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Button(
+            onClick = calculate,
+            enabled = !isCalculating,
+            modifier = Modifier.fillMaxWidth().height(42.dp),
+            shape = RoundedCornerShape(6.dp)
+        ) {
+            CustomText(
+                text = if (isCalculating) stringResource(Res.string.calculating) else
+                    stringResource(Res.string.calculate),
+                color = if (isCalculating) Color.Black else Color.White
+            )
+        }
     }
 }
 
