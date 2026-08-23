@@ -161,90 +161,22 @@ private fun SceneContent(
                 .fillMaxHeight()
                 .weight(1f)
                 .background(VeryLightGray2)
-                .pointerInput(bodySize, bodySplits, isCalculating) {
-
-                    if (isCalculating) return@pointerInput
-
-                    detectTapGestures(
-                        onTap = { clickOffset ->
-                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                            if (clickedFace != null) toggleFaceFixed(clickedFace)
-                        },
-                        onLongPress = { clickOffset ->
-                            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
-                            if (clickedFace != null) toggleFaceLoaded(clickedFace)
-                        }
-                    )
-                }
-                .pointerInput(isCalculating) {
-
-                    if (isCalculating) return@pointerInput
-
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val fingersCount = event.changes.size
-                            if (event.type == PointerEventType.Move) {
-                                val change = event.changes.firstOrNull()
-                                if (change != null && !isCalculating) {
-                                    val dragAmount = change.position - change.previousPosition
-                                    if (event.buttons.isSecondaryPressed || fingersCount >= 3) {
-                                        camera.targetOffsetX += dragAmount.x
-                                        camera.targetOffsetY += dragAmount.y
-                                    } else if (fingersCount == 2) {
-                                        val change0 = event.changes.getOrNull(0)
-                                        val change1 = event.changes.getOrNull(1)
-                                        if (change0 != null && change1 != null) {
-                                            val currDistance =
-                                                (change0.position - change1.position).getDistance()
-                                            val prevDistance =
-                                                (change0.previousPosition - change1.previousPosition).getDistance()
-                                            if (prevDistance > 0f) {
-                                                camera.scaleModifier =
-                                                    (camera.scaleModifier * (currDistance / prevDistance)).coerceIn(
-                                                        0.3f,
-                                                        5.0f
-                                                    )
-                                            }
-                                        }
-                                    } else if (fingersCount == 1 && !event.buttons.isSecondaryPressed) {
-                                        camera.angleX += dragAmount.x * 0.4f
-                                        camera.angleY =
-                                            (camera.angleY - dragAmount.y * 0.4f).coerceIn(
-                                                -85f,
-                                                85f
-                                            )
-                                    }
-                                    change.consume()
-                                }
-                            }
-                        }
-                    }
-                }
-                .pointerInput(isCalculating) {
-
-                    if (isCalculating) return@pointerInput
-
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            if (event.type == PointerEventType.Scroll && !isCalculating) {
-                                val change = event.changes.firstOrNull()
-                                if (change != null) {
-                                    val rawY = change.scrollDelta.y
-                                    if (rawY != 0f) {
-                                        camera.scaleModifier =
-                                            (camera.scaleModifier * kotlin.math.exp(-rawY * 0.05f)).coerceIn(
-                                                0.3f,
-                                                5.0f
-                                            )
-                                        change.consume()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                .faceSelectionGestures(
+                    bodySize = bodySize,
+                    bodySplits = bodySplits,
+                    isCalculating = isCalculating,
+                    projectedFacesList = projectedFacesList,
+                    onToggleFixed = { toggleFaceFixed(it) },
+                    onToggleLoaded = { toggleFaceLoaded(it) }
+                )
+                .cameraTouchControls(
+                    isCalculating = isCalculating,
+                    camera = camera
+                )
+                .cameraMouseScroll(
+                    isCalculating = isCalculating,
+                    camera = camera
+                )
         ) {
 
             RenderBody(
@@ -257,6 +189,89 @@ private fun SceneContent(
             if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
             InfoPanel(modifier = Modifier.align(Alignment.TopEnd))
+        }
+    }
+}
+
+fun Modifier.faceSelectionGestures(
+    bodySize: Vector3,
+    bodySplits: Vector3,
+    isCalculating: Boolean,
+    projectedFacesList: List<ProjectedFace>,
+    onToggleFixed: (ElementFace) -> Unit,
+    onToggleLoaded: (ElementFace) -> Unit
+): Modifier = this.pointerInput(bodySize, bodySplits, isCalculating) {
+    if (isCalculating) return@pointerInput
+
+    detectTapGestures(
+        onTap = { clickOffset ->
+            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+            if (clickedFace != null) onToggleFixed(clickedFace)
+        },
+        onLongPress = { clickOffset ->
+            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+            if (clickedFace != null) onToggleLoaded(clickedFace)
+        }
+    )
+}
+
+fun Modifier.cameraTouchControls(
+    isCalculating: Boolean,
+    camera: SimpleCamera
+): Modifier = this.pointerInput(isCalculating) {
+    if (isCalculating) return@pointerInput
+
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            val fingersCount = event.changes.size
+            if (event.type == PointerEventType.Move) {
+                val change = event.changes.firstOrNull()
+                if (change != null) {
+                    val dragAmount = change.position - change.previousPosition
+                    if (event.buttons.isSecondaryPressed || fingersCount >= 3) {
+                        camera.targetOffsetX += dragAmount.x
+                        camera.targetOffsetY += dragAmount.y
+                    } else if (fingersCount == 2) {
+                        val change0 = event.changes.getOrNull(0)
+                        val change1 = event.changes.getOrNull(1)
+                        if (change0 != null && change1 != null) {
+                            val currDistance = (change0.position - change1.position).getDistance()
+                            val prevDistance = (change0.previousPosition - change1.previousPosition).getDistance()
+                            if (prevDistance > 0f) {
+                                camera.scaleModifier = (camera.scaleModifier * (currDistance / prevDistance)).coerceIn(0.3f, 5.0f)
+                            }
+                        }
+                    } else if (fingersCount == 1 && !event.buttons.isSecondaryPressed) {
+                        camera.angleX += dragAmount.x * 0.4f
+                        camera.angleY = (camera.angleY - dragAmount.y * 0.4f).coerceIn(-85f, 85f)
+                    }
+                    change.consume()
+                }
+            }
+        }
+    }
+}
+
+fun Modifier.cameraMouseScroll(
+    isCalculating: Boolean,
+    camera: SimpleCamera
+): Modifier = this.pointerInput(isCalculating) {
+    if (isCalculating) return@pointerInput
+
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            if (event.type == PointerEventType.Scroll) {
+                val change = event.changes.firstOrNull()
+                if (change != null) {
+                    val rawY = change.scrollDelta.y
+                    if (rawY != 0f) {
+                        camera.scaleModifier = (camera.scaleModifier * kotlin.math.exp(-rawY * 0.05f)).coerceIn(0.3f, 5.0f)
+                        change.consume()
+                    }
+                }
+            }
         }
     }
 }
