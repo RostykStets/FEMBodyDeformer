@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
@@ -37,6 +38,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -53,12 +58,14 @@ import femlab.shared.generated.resources.axes
 import femlab.shared.generated.resources.axis_x
 import femlab.shared.generated.resources.axis_y
 import femlab.shared.generated.resources.axis_z
+import femlab.shared.generated.resources.baloo_bhai_2_regular
 import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
 import femlab.shared.generated.resources.parameters
 import femlab.shared.generated.resources.poisson_ratio
 import femlab.shared.generated.resources.pressure
+import femlab.shared.generated.resources.show_indexes
 import femlab.shared.generated.resources.size_x
 import femlab.shared.generated.resources.size_y
 import femlab.shared.generated.resources.size_z
@@ -67,6 +74,7 @@ import femlab.shared.generated.resources.split_y
 import femlab.shared.generated.resources.split_z
 import femlab.shared.generated.resources.splits
 import femlab.shared.generated.resources.young_module
+import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -131,6 +139,8 @@ private fun SceneContent(
 
     val camera = remember { SimpleCamera() }
 
+    var showIndexes by remember { mutableStateOf(false) }
+
     Row(modifier = Modifier.fillMaxSize()) {
 
         ControlPanel(
@@ -183,12 +193,16 @@ private fun SceneContent(
                 femBody = femBody,
                 deformedBody = deformedBody,
                 projectedFacesList = projectedFacesList,
-                camera = camera
+                camera = camera,
+                showIndexes = showIndexes
             )
 
             if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
-            InfoPanel(modifier = Modifier.align(Alignment.TopEnd))
+            InfoPanel(
+                modifier = Modifier.align(Alignment.TopEnd),
+                showIndexes = showIndexes,
+                toggleIndexesCheckbox = { showIndexes = it })
         }
     }
 }
@@ -281,8 +295,13 @@ private fun RenderBody(
     femBody: FEMBody,
     deformedBody: DoubleArray?,
     projectedFacesList: MutableList<ProjectedFace>,
-    camera: SimpleCamera
+    camera: SimpleCamera,
+    showIndexes: Boolean
 ) {
+
+    val textMeasurer = rememberTextMeasurer()
+
+    val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
 
     Canvas(modifier = Modifier.fillMaxSize()) {
         val w = size.width
@@ -347,7 +366,21 @@ private fun RenderBody(
             width = w,
             height = h,
             baseScale = baseScale,
-            drawCircle = { centerPt -> drawCircle(color = PureBlue, radius = 4.5f, center = centerPt) }
+            showIndexes = showIndexes,
+            drawCircle = { centerPt -> drawCircle(color = PureBlue, radius = 4.5f, center = centerPt) },
+            drawText = { screenPt, index -> drawText(
+                textMeasurer = textMeasurer,
+                text = "$index",
+                topLeft = Offset(
+                    x = screenPt.x + 8f,
+                    y = screenPt.y - 12f
+                ),
+                style = TextStyle(
+                    color = Color.Black,
+                    fontSize = 11.sp,
+                    fontFamily = customFontFamily
+                )
+            ) }
         )
     }
 }
@@ -409,7 +442,9 @@ private fun drawNodes(
     width: Float,
     height: Float,
     baseScale: Float,
-    drawCircle: (Offset) -> Unit
+    showIndexes: Boolean,
+    drawCircle: (Offset) -> Unit,
+    drawText: (Offset, Int) -> Unit
 ) {
     for (nodeId in 1..femBody.nqp) {
         val mscX = femBody.getX(nodeId).toFloat()
@@ -419,6 +454,8 @@ private fun drawNodes(
         val screenPt = camera.project(Vector3(mscX, mscZ, -mscY), width, height, baseScale)
 
         drawCircle(screenPt)
+
+        if (showIndexes) drawText(screenPt, nodeId)
     }
 }
 
@@ -699,7 +736,11 @@ private fun CalculatingIndicator(modifier: Modifier) {
 }
 
 @Composable
-private fun InfoPanel(modifier: Modifier) {
+private fun InfoPanel(
+    modifier: Modifier,
+    showIndexes: Boolean,
+    toggleIndexesCheckbox: (Boolean) -> Unit
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -707,7 +748,7 @@ private fun InfoPanel(modifier: Modifier) {
         Column(
             modifier = Modifier
                 .padding(top = 12.dp, end = 12.dp)
-                .width(150.dp)
+                .width(170.dp)
                 .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
                 .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
                 .padding(8.dp)
@@ -719,29 +760,51 @@ private fun InfoPanel(modifier: Modifier) {
                 color = Color.Gray
             )
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Red))
+            AxisRow(axisName = stringResource(Res.string.axis_x), axisColor = Color.Red)
 
-                Spacer(modifier = Modifier.width(6.dp))
+            AxisRow(axisName = stringResource(Res.string.axis_y), axisColor = Color.Green)
 
-                CustomText(text = stringResource(Res.string.axis_x))
-            }
+            AxisRow(axisName = stringResource(Res.string.axis_z), axisColor = Color.Blue)
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Green))
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                CustomText(text = stringResource(Res.string.axis_y))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp, 3.dp).background(Color.Blue))
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                CustomText(text = stringResource(Res.string.axis_z))
-            }
+            IndexesCheckbox(
+                showIndexes = showIndexes,
+                toggleIndexesCheckbox = toggleIndexesCheckbox
+            )
         }
+    }
+}
+
+@Composable
+private fun AxisRow(axisName: String, axisColor: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.size(12.dp, 3.dp).background(axisColor))
+
+        Spacer(modifier = Modifier.width(6.dp))
+
+        CustomText(text = axisName)
+    }
+}
+
+@Composable
+fun IndexesCheckbox(showIndexes: Boolean, toggleIndexesCheckbox: (Boolean) -> Unit) {
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 2.dp)
+            .width(170.dp)
+            .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+            .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
+            .padding(8.dp)
+    ) {
+        Checkbox(
+            checked = showIndexes,
+            onCheckedChange = { toggleIndexesCheckbox(it) },
+            modifier = Modifier.size(20.dp)
+        )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        CustomText(text = stringResource(Res.string.show_indexes), fontSize = 13.sp)
     }
 }
 
