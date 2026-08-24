@@ -1,9 +1,12 @@
 package com.rostykstets.femlab.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,6 +65,8 @@ import femlab.shared.generated.resources.baloo_bhai_2_regular
 import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
+import femlab.shared.generated.resources.left_angle_bracket
+import femlab.shared.generated.resources.right_angle_bracket
 import femlab.shared.generated.resources.parameters
 import femlab.shared.generated.resources.poisson_ratio
 import femlab.shared.generated.resources.pressure
@@ -143,7 +148,7 @@ private fun SceneContent(
 
     Row(modifier = Modifier.fillMaxSize()) {
 
-        ControlPanel(
+        SideMenu(
             sizeX = sizeX,
             sizeY = sizeY,
             sizeZ = sizeZ,
@@ -251,9 +256,14 @@ fun Modifier.cameraTouchControls(
                         val change1 = event.changes.getOrNull(1)
                         if (change0 != null && change1 != null) {
                             val currDistance = (change0.position - change1.position).getDistance()
-                            val prevDistance = (change0.previousPosition - change1.previousPosition).getDistance()
+                            val prevDistance =
+                                (change0.previousPosition - change1.previousPosition).getDistance()
                             if (prevDistance > 0f) {
-                                camera.scaleModifier = (camera.scaleModifier * (currDistance / prevDistance)).coerceIn(0.3f, 5.0f)
+                                camera.scaleModifier =
+                                    (camera.scaleModifier * (currDistance / prevDistance)).coerceIn(
+                                        0.3f,
+                                        5.0f
+                                    )
                             }
                         }
                     } else if (fingersCount == 1 && !event.buttons.isSecondaryPressed) {
@@ -281,7 +291,11 @@ fun Modifier.cameraMouseScroll(
                 if (change != null) {
                     val rawY = change.scrollDelta.y
                     if (rawY != 0f) {
-                        camera.scaleModifier = (camera.scaleModifier * kotlin.math.exp(-rawY * 0.05f)).coerceIn(0.3f, 5.0f)
+                        camera.scaleModifier =
+                            (camera.scaleModifier * kotlin.math.exp(-rawY * 0.05f)).coerceIn(
+                                0.3f,
+                                5.0f
+                            )
                         change.consume()
                     }
                 }
@@ -367,20 +381,28 @@ private fun RenderBody(
             height = h,
             baseScale = baseScale,
             showIndexes = showIndexes,
-            drawCircle = { centerPt -> drawCircle(color = PureBlue, radius = 4.5f, center = centerPt) },
-            drawText = { screenPt, index -> drawText(
-                textMeasurer = textMeasurer,
-                text = "$index",
-                topLeft = Offset(
-                    x = screenPt.x + 8f,
-                    y = screenPt.y - 12f
-                ),
-                style = TextStyle(
-                    color = Color.Black,
-                    fontSize = 11.sp,
-                    fontFamily = customFontFamily
+            drawCircle = { centerPt ->
+                drawCircle(
+                    color = PureBlue,
+                    radius = 4.5f,
+                    center = centerPt
                 )
-            ) }
+            },
+            drawText = { screenPt, index ->
+                drawText(
+                    textMeasurer = textMeasurer,
+                    text = "$index",
+                    topLeft = Offset(
+                        x = screenPt.x + 8f,
+                        y = screenPt.y - 12f
+                    ),
+                    style = TextStyle(
+                        color = Color.Black,
+                        fontSize = 11.sp,
+                        fontFamily = customFontFamily
+                    )
+                )
+            }
         )
     }
 }
@@ -456,6 +478,90 @@ private fun drawNodes(
         drawCircle(screenPt)
 
         if (showIndexes) drawText(screenPt, nodeId)
+    }
+}
+
+@Composable
+private fun SideMenu(
+    sizeX: String,
+    sizeY: String,
+    sizeZ: String,
+    splitX: String,
+    splitY: String,
+    splitZ: String,
+    youngModule: String,
+    poissonRatio: String,
+    pressure: String,
+    bodySize: Vector3,
+    bodySplits: Vector3,
+    isCalculating: Boolean,
+    updateSize: (Vector3) -> Unit,
+    updateSplits: (Vector3) -> Unit,
+    updateYoungModule: (String) -> Unit,
+    updatePoissonRatio: (String) -> Unit,
+    updatePressure: (String) -> Unit,
+    calculate: () -> Unit
+) {
+
+    var showControlPanel by remember { mutableStateOf(true) }
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val menuWidth = if (showControlPanel) 220.dp else 40.dp
+
+    val shape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp)
+
+    Row(
+        modifier = Modifier.width(menuWidth)
+            .background(color = VeryLightGray2).fillMaxHeight()
+    ) {
+
+        AnimatedVisibility(visible = showControlPanel) {
+            ControlPanel(
+                sizeX = sizeX,
+                sizeY = sizeY,
+                sizeZ = sizeZ,
+                splitX = splitX,
+                splitY = splitY,
+                splitZ = splitZ,
+                bodySize = bodySize,
+                bodySplits = bodySplits,
+                youngModule = youngModule,
+                poissonRatio = poissonRatio,
+                pressure = pressure,
+                isCalculating = isCalculating,
+                updateSize = updateSize,
+                updateSplits = updateSplits,
+                updateYoungModule = updateYoungModule,
+                updatePoissonRatio = updatePoissonRatio,
+                updatePressure = updatePressure,
+                calculate = calculate
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .padding(top = 40.dp)
+                .width(40.dp)
+                .height(60.dp)
+                .background(
+                    color = Color.White,
+                    shape = shape
+                )
+                .clickable(
+                    enabled = true,
+                    indication = null,
+                    interactionSource = interactionSource,
+                    onClick = { showControlPanel = !showControlPanel }
+                ),
+            contentAlignment = Alignment.Center) {
+
+            CustomText(
+                text = if (showControlPanel) stringResource(Res.string.left_angle_bracket)
+                else stringResource(Res.string.right_angle_bracket),
+                fontSize = 25.sp
+            )
+        }
     }
 }
 

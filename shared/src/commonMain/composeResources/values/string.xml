@@ -18,4 +18,6 @@
     <string name="show_indexes">Показати індекси</string>
     <string name="calculating">Рахую...</string>
     <string name="calculate">Обчислити</string>
+    <string name="left_angle_bracket">&lt;</string>
+    <string name="right_angle_bracket">&gt;</string>
 </resources>
