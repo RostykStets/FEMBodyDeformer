@@ -209,7 +209,7 @@ private fun SceneContent(
 
         if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
-        InfoPanel(
+        InfoMenu(
             modifier = Modifier.align(Alignment.TopEnd),
             showIndexes = showIndexes,
             toggleIndexesCheckbox = { showIndexes = it })
@@ -594,10 +594,12 @@ private fun ControlPanel(
 
     val labelFontSize = 18.sp
 
+    val shape = RoundedCornerShape(bottomEnd = 8.dp)
+
     Column(
         modifier = Modifier
             .width(180.dp)
-            .background(color = Color.White)
+            .background(color = Color.White, shape = shape)
             .verticalScroll(rememberScrollState())
             .padding(6.dp)
             .fillMaxHeight()
@@ -847,18 +849,72 @@ private fun CalculatingIndicator(modifier: Modifier) {
 }
 
 @Composable
+fun InfoMenu(
+    modifier: Modifier,
+    showIndexes: Boolean,
+    toggleIndexesCheckbox: (Boolean) -> Unit
+) {
+
+    var showPanel by remember { mutableStateOf(true) }
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val menuWidth = if (showPanel) 210.dp else 40.dp
+
+    val shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp)
+
+    Row(
+        modifier = modifier.width(menuWidth)
+            .background(color = VeryLightGray2).fillMaxHeight()
+    ) {
+
+        Box(
+            modifier = Modifier
+                .padding(top = 40.dp)
+                .width(40.dp)
+                .height(60.dp)
+                .background(
+                    color = Color.White,
+                    shape = shape
+                )
+                .clickable(
+                    enabled = true,
+                    indication = null,
+                    interactionSource = interactionSource,
+                    onClick = { showPanel = !showPanel }
+                ),
+            contentAlignment = Alignment.Center) {
+
+            CustomText(
+                text = if (showPanel) stringResource(Res.string.right_angle_bracket)
+                else stringResource(Res.string.left_angle_bracket),
+                fontSize = 25.sp
+            )
+        }
+
+        AnimatedVisibility(visible = showPanel) {
+            InfoPanel(
+                modifier = modifier,
+                showIndexes = showIndexes,
+                toggleIndexesCheckbox = toggleIndexesCheckbox
+            )
+        }
+    }
+}
+
+@Composable
 private fun InfoPanel(
     modifier: Modifier,
     showIndexes: Boolean,
     toggleIndexesCheckbox: (Boolean) -> Unit
 ) {
 
+    val shape = RoundedCornerShape(bottomStart = 8.dp)
+
     Column(
         modifier = modifier
-            .padding(top = 12.dp, end = 12.dp)
             .width(170.dp)
-            .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-            .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = 0.9f), shape)
             .padding(8.dp)
     ) {
         CustomText(
@@ -930,14 +986,16 @@ fun FacesInfo() {
     FaceInfo(
         color = fixedFaceColor,
         faceType = stringResource(Res.string.fixed_face_type),
-        faceInfo = stringResource(Res.string.fixed_face_info))
+        faceInfo = stringResource(Res.string.fixed_face_info)
+    )
 
     Spacer(modifier = Modifier.height(8.dp))
 
     FaceInfo(
         color = loadedFaceColor,
         faceType = stringResource(Res.string.loaded_face_type),
-        faceInfo = stringResource(Res.string.loaded_face_info))
+        faceInfo = stringResource(Res.string.loaded_face_info)
+    )
 }
 
 @Composable
