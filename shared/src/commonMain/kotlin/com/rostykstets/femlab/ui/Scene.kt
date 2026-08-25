@@ -69,8 +69,10 @@ import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
 import femlab.shared.generated.resources.fixed_face_info
+import femlab.shared.generated.resources.fixed_face_type
 import femlab.shared.generated.resources.left_angle_bracket
 import femlab.shared.generated.resources.loaded_face_info
+import femlab.shared.generated.resources.loaded_face_type
 import femlab.shared.generated.resources.right_angle_bracket
 import femlab.shared.generated.resources.parameters
 import femlab.shared.generated.resources.poisson_ratio
@@ -877,7 +879,7 @@ private fun InfoPanel(
             toggleIndexesCheckbox = toggleIndexesCheckbox
         )
 
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         FacesInfo()
     }
@@ -924,28 +926,42 @@ fun FacesInfo() {
 
     val loadedFaceColor = Color.Green.copy(alpha = 0.6f)
 
-    val fixedFaceInfo = stringResource(Res.string.fixed_face_info)
 
-    val loadedFaceInfo = stringResource(Res.string.loaded_face_info)
+    FaceInfo(
+        color = fixedFaceColor,
+        faceType = stringResource(Res.string.fixed_face_type),
+        faceInfo = stringResource(Res.string.fixed_face_info))
 
-    FaceInfo(color = fixedFaceColor, faceInfo = fixedFaceInfo)
+    Spacer(modifier = Modifier.height(8.dp))
 
-    Spacer(modifier = Modifier.height(5.dp))
-
-    FaceInfo(color = loadedFaceColor, faceInfo = loadedFaceInfo)
+    FaceInfo(
+        color = loadedFaceColor,
+        faceType = stringResource(Res.string.loaded_face_type),
+        faceInfo = stringResource(Res.string.loaded_face_info))
 }
 
 @Composable
-private fun FaceInfo(color: Color, faceInfo: String) {
+private fun FaceInfo(color: Color, faceType: String, faceInfo: String) {
+
+    val fontSize = 13.sp
+
     Row(verticalAlignment = Alignment.CenterVertically) {
 
         Box(modifier = Modifier.size(20.dp).background(color = color))
 
         CustomText(
-            text = " - $faceInfo",
-            fontSize = 13.sp
+            text = " - $faceType",
+            fontSize = fontSize
         )
     }
+
+    Spacer(modifier = Modifier.height(5.dp))
+
+    CustomText(
+        text = faceInfo,
+        maxLines = 3,
+        fontSize = fontSize
+    )
 }
 
 private fun DrawScope.drawBody(
