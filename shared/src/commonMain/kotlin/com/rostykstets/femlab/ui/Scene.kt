@@ -146,9 +146,32 @@ private fun SceneContent(
 
     var showIndexes by remember { mutableStateOf(false) }
 
-    Row(modifier = Modifier.fillMaxSize()) {
+    val projectedFacesList = remember { mutableStateListOf<ProjectedFace>() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .background(VeryLightGray2)
+            .faceSelectionGestures(
+                bodySize = bodySize,
+                bodySplits = bodySplits,
+                isCalculating = isCalculating,
+                projectedFacesList = projectedFacesList,
+                onToggleFixed = { toggleFaceFixed(it) },
+                onToggleLoaded = { toggleFaceLoaded(it) }
+            )
+            .cameraTouchControls(
+                isCalculating = isCalculating,
+                camera = camera
+            )
+            .cameraMouseScroll(
+                isCalculating = isCalculating,
+                camera = camera
+            )
+    ) {
 
         SideMenu(
+            modifier = Modifier.align(alignment = Alignment.TopStart),
             sizeX = sizeX,
             sizeY = sizeY,
             sizeZ = sizeZ,
@@ -169,46 +192,20 @@ private fun SceneContent(
             calculate = calculate
         )
 
-        val projectedFacesList = remember { mutableStateListOf<ProjectedFace>() }
+        RenderBody(
+            femBody = femBody,
+            deformedBody = deformedBody,
+            projectedFacesList = projectedFacesList,
+            camera = camera,
+            showIndexes = showIndexes
+        )
 
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f)
-                .background(VeryLightGray2)
-                .faceSelectionGestures(
-                    bodySize = bodySize,
-                    bodySplits = bodySplits,
-                    isCalculating = isCalculating,
-                    projectedFacesList = projectedFacesList,
-                    onToggleFixed = { toggleFaceFixed(it) },
-                    onToggleLoaded = { toggleFaceLoaded(it) }
-                )
-                .cameraTouchControls(
-                    isCalculating = isCalculating,
-                    camera = camera
-                )
-                .cameraMouseScroll(
-                    isCalculating = isCalculating,
-                    camera = camera
-                )
-        ) {
+        if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
-            RenderBody(
-                femBody = femBody,
-                deformedBody = deformedBody,
-                projectedFacesList = projectedFacesList,
-                camera = camera,
-                showIndexes = showIndexes
-            )
-
-            if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
-
-            InfoPanel(
-                modifier = Modifier.align(Alignment.TopEnd),
-                showIndexes = showIndexes,
-                toggleIndexesCheckbox = { showIndexes = it })
-        }
+        InfoPanel(
+            modifier = Modifier.align(Alignment.TopEnd),
+            showIndexes = showIndexes,
+            toggleIndexesCheckbox = { showIndexes = it })
     }
 }
 
@@ -483,6 +480,7 @@ private fun drawNodes(
 
 @Composable
 private fun SideMenu(
+    modifier: Modifier = Modifier,
     sizeX: String,
     sizeY: String,
     sizeZ: String,
@@ -512,7 +510,7 @@ private fun SideMenu(
     val shape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp)
 
     Row(
-        modifier = Modifier.width(menuWidth)
+        modifier = modifier.width(menuWidth)
             .background(color = VeryLightGray2).fillMaxHeight()
     ) {
 
