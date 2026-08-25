@@ -20,4 +20,6 @@
     <string name="calculate">Обчислити</string>
     <string name="left_angle_bracket">&lt;</string>
     <string name="right_angle_bracket">&gt;</string>
+    <string name="fixed_face_info">Зафіксована грань</string>
+    <string name="loaded_face_info">Навантажена грань</string>
 </resources>

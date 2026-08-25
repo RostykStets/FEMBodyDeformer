@@ -68,7 +68,9 @@ import femlab.shared.generated.resources.baloo_bhai_2_regular
 import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
+import femlab.shared.generated.resources.fixed_face_info
 import femlab.shared.generated.resources.left_angle_bracket
+import femlab.shared.generated.resources.loaded_face_info
 import femlab.shared.generated.resources.right_angle_bracket
 import femlab.shared.generated.resources.parameters
 import femlab.shared.generated.resources.poisson_ratio
@@ -848,36 +850,36 @@ private fun InfoPanel(
     showIndexes: Boolean,
     toggleIndexesCheckbox: (Boolean) -> Unit
 ) {
+
     Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .padding(top = 12.dp, end = 12.dp)
+            .width(170.dp)
+            .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
+            .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
+            .padding(8.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .padding(top = 12.dp, end = 12.dp)
-                .width(170.dp)
-                .background(Color.White.copy(alpha = 0.9f), RoundedCornerShape(8.dp))
-                .border(1.dp, VeryLightGray, RoundedCornerShape(8.dp))
-                .padding(8.dp)
-        ) {
-            CustomText(
-                modifier = Modifier.padding(bottom = 4.dp),
-                text = stringResource(Res.string.axes),
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
+        CustomText(
+            modifier = Modifier.padding(bottom = 4.dp),
+            text = stringResource(Res.string.axes),
+            fontSize = 13.sp,
+            color = Color.Gray
+        )
 
-            AxisRow(axisName = stringResource(Res.string.axis_x), axisColor = Color.Red)
+        AxisRow(axisName = stringResource(Res.string.axis_x), axisColor = Color.Red)
 
-            AxisRow(axisName = stringResource(Res.string.axis_y), axisColor = Color.Green)
+        AxisRow(axisName = stringResource(Res.string.axis_y), axisColor = Color.Green)
 
-            AxisRow(axisName = stringResource(Res.string.axis_z), axisColor = Color.Blue)
+        AxisRow(axisName = stringResource(Res.string.axis_z), axisColor = Color.Blue)
 
-            IndexesCheckbox(
-                showIndexes = showIndexes,
-                toggleIndexesCheckbox = toggleIndexesCheckbox
-            )
-        }
+        IndexesCheckbox(
+            showIndexes = showIndexes,
+            toggleIndexesCheckbox = toggleIndexesCheckbox
+        )
+
+        Spacer(modifier = Modifier.height(5.dp))
+
+        FacesInfo()
     }
 }
 
@@ -912,6 +914,37 @@ fun IndexesCheckbox(showIndexes: Boolean, toggleIndexesCheckbox: (Boolean) -> Un
         Spacer(modifier = Modifier.width(10.dp))
 
         CustomText(text = stringResource(Res.string.show_indexes), fontSize = 13.sp)
+    }
+}
+
+@Composable
+fun FacesInfo() {
+
+    val fixedFaceColor = Color.Gray.copy(alpha = 0.7f)
+
+    val loadedFaceColor = Color.Green.copy(alpha = 0.6f)
+
+    val fixedFaceInfo = stringResource(Res.string.fixed_face_info)
+
+    val loadedFaceInfo = stringResource(Res.string.loaded_face_info)
+
+    FaceInfo(color = fixedFaceColor, faceInfo = fixedFaceInfo)
+
+    Spacer(modifier = Modifier.height(5.dp))
+
+    FaceInfo(color = loadedFaceColor, faceInfo = loadedFaceInfo)
+}
+
+@Composable
+private fun FaceInfo(color: Color, faceInfo: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+
+        Box(modifier = Modifier.size(20.dp).background(color = color))
+
+        CustomText(
+            text = " - $faceInfo",
+            fontSize = 13.sp
+        )
     }
 }
 
@@ -1011,8 +1044,8 @@ private fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
 }
 
 @Preview(
-    widthDp = 1200,
-    heightDp = 540
+    widthDp = 900,
+    heightDp = 600
 )
 @Composable
 private fun ScenePreview() {
