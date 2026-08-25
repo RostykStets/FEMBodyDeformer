@@ -1,4 +1,4 @@
-package com.rostykstets.femlab.ui.components
+package com.rostykstets.femlab.ui.utilities
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

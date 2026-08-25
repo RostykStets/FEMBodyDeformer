@@ -1,4 +1,4 @@
-package com.rostykstets.femlab.ui
+package com.rostykstets.femlab.ui.models
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

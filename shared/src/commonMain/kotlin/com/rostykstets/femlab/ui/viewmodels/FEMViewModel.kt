@@ -1,9 +1,10 @@
-package com.rostykstets.femlab.ui
+package com.rostykstets.femlab.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.rostykstets.femlab.domain.ElementFace
-import com.rostykstets.femlab.domain.FEMBody
+import com.rostykstets.femlab.domain.models.ElementFace
+import com.rostykstets.femlab.domain.models.FEMBody
+import com.rostykstets.femlab.ui.models.Vector3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,4 +1,4 @@
-package com.rostykstets.femlab.domain
+package com.rostykstets.femlab.domain.models
 
 import androidx.compose.ui.geometry.Offset
 

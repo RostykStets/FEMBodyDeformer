@@ -1,4 +1,4 @@
-package com.rostykstets.femlab.domain
+package com.rostykstets.femlab.domain.constants
 
 import kotlin.math.sqrt
 

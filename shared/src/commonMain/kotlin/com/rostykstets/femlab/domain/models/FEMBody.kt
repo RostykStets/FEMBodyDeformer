@@ -1,8 +1,12 @@
-package com.rostykstets.femlab.domain
+package com.rostykstets.femlab.domain.models
 
 import androidx.compose.runtime.mutableStateListOf
-import com.rostykstets.femlab.ui.Vector3
-import com.rostykstets.femlab.ui.product
+import com.rostykstets.femlab.domain.constants.GaussConstants
+import com.rostykstets.femlab.ui.models.Vector3
+import com.rostykstets.femlab.ui.models.product
+import kotlin.collections.iterator
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 class FEMBody {
     var nel: Int = 0
@@ -441,7 +445,7 @@ class FEMBody {
                 rsnew += r[i] * r[i]
             }
 
-            if (kotlin.math.sqrt(rsnew) < epsilon) {
+            if (sqrt(rsnew) < epsilon) {
                 break
             }
 
@@ -600,9 +604,9 @@ class FEMBody {
 
     private fun cleanZero(value: Double, eps: Double): Double {
         return when {
-            kotlin.math.abs(value) < eps -> 0.0
-            kotlin.math.abs(value - 1.0) < eps -> 1.0
-            kotlin.math.abs(value + 1.0) < eps -> -1.0
+            abs(value) < eps -> 0.0
+            abs(value - 1.0) < eps -> 1.0
+            abs(value + 1.0) < eps -> -1.0
             else -> value
         }
     }
@@ -612,7 +616,7 @@ class FEMBody {
             val d = dj[elementIndex][i]
             val det = djDet[elementIndex][i]
 
-            if (kotlin.math.abs(det) < 1e-12) {
+            if (abs(det) < 1e-12) {
                 throw IllegalStateException("Якобіан вироджений (det = 0) у точці Гауса $i елемента $elementIndex. Перевірте правильність нумерації вузлів елемента!")
             }
 
