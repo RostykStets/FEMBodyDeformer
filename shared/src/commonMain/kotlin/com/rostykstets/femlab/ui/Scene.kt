@@ -159,26 +159,37 @@ private fun SceneContent(
         modifier = Modifier
             .fillMaxHeight()
             .background(VeryLightGray2)
-            .faceSelectionGestures(
-                bodySize = bodySize,
-                bodySplits = bodySplits,
-                isCalculating = isCalculating,
-                projectedFacesList = projectedFacesList,
-                onToggleFixed = { toggleFaceFixed(it) },
-                onToggleLoaded = { toggleFaceLoaded(it) }
-            )
-            .cameraTouchControls(
-                isCalculating = isCalculating,
-                camera = camera
-            )
-            .cameraMouseScroll(
-                isCalculating = isCalculating,
-                camera = camera
-            )
     ) {
 
+        RenderBody(
+            modifier = Modifier
+                .faceSelectionGestures(
+                    bodySize = bodySize,
+                    bodySplits = bodySplits,
+                    isCalculating = isCalculating,
+                    projectedFacesList = projectedFacesList,
+                    onToggleFixed = { toggleFaceFixed(it) },
+                    onToggleLoaded = { toggleFaceLoaded(it) }
+                )
+                .cameraTouchControls(
+                    isCalculating = isCalculating,
+                    camera = camera
+                )
+                .cameraMouseScroll(
+                    isCalculating = isCalculating,
+                    camera = camera
+                ),
+            femBody = femBody,
+            deformedBody = deformedBody,
+            projectedFacesList = projectedFacesList,
+            camera = camera,
+            showIndexes = showIndexes
+        )
+
         SideMenu(
-            modifier = Modifier.align(alignment = Alignment.TopStart),
+            modifier = Modifier
+                .align(alignment = Alignment.TopStart)
+                .clickable(enabled = false, onClick = {}),
             sizeX = sizeX,
             sizeY = sizeY,
             sizeZ = sizeZ,
@@ -199,18 +210,12 @@ private fun SceneContent(
             calculate = calculate
         )
 
-        RenderBody(
-            femBody = femBody,
-            deformedBody = deformedBody,
-            projectedFacesList = projectedFacesList,
-            camera = camera,
-            showIndexes = showIndexes
-        )
-
         if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
 
         InfoMenu(
-            modifier = Modifier.align(Alignment.TopEnd),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .clickable(enabled = false, onClick = {}),
             showIndexes = showIndexes,
             toggleIndexesCheckbox = { showIndexes = it })
     }
@@ -310,6 +315,7 @@ fun Modifier.cameraMouseScroll(
 
 @Composable
 private fun RenderBody(
+    modifier: Modifier = Modifier,
     femBody: FEMBody,
     deformedBody: DoubleArray?,
     projectedFacesList: MutableList<ProjectedFace>,
@@ -321,7 +327,7 @@ private fun RenderBody(
 
     val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
 
-    Canvas(modifier = Modifier.fillMaxSize()) {
+    Canvas(modifier = modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
         if (w <= 0f || h <= 0f) return@Canvas
@@ -518,7 +524,7 @@ private fun SideMenu(
 
     Row(
         modifier = modifier.width(menuWidth)
-            .background(color = VeryLightGray2).fillMaxHeight()
+            .background(color = Color.Transparent).fillMaxHeight()
     ) {
 
         AnimatedVisibility(visible = showControlPanel) {
@@ -865,7 +871,7 @@ fun InfoMenu(
 
     Row(
         modifier = modifier.width(menuWidth)
-            .background(color = VeryLightGray2).fillMaxHeight()
+            .background(color = Color.Transparent).fillMaxHeight()
     ) {
 
         Box(
