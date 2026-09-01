@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import femlab.shared.generated.resources.Res
@@ -27,6 +28,7 @@ fun CustomText(
         modifier = modifier,
         text = text,
         style = TextStyle(fontSize = fontSize, color = color, fontFamily = customFontFamily),
-        maxLines = maxLines
+        maxLines = maxLines,
+        textAlign = TextAlign.Center
     )
 }

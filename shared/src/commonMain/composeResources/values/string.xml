@@ -24,4 +24,5 @@
     <string name="loaded_face_type">Навантажена грань</string>
     <string name="fixed_face_info">Щоб закріпити грань, натисніть на неї один раз</string>
     <string name="loaded_face_info">Щоб навантажити грань, натисніть та утримуйте палець/мишку на ній</string>
+    <string name="warning_message">Оберіть зафіксовані та навантажені грані для обчислення!</string>
 </resources>

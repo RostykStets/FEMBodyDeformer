@@ -33,7 +33,10 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
     val deformedBody = _deformedBody.asStateFlow()
 
     private val _isCalculating = MutableStateFlow(false)
-    val isCalculating: StateFlow<Boolean> = _isCalculating
+    val isCalculating: StateFlow<Boolean> = _isCalculating.asStateFlow()
+
+    private val _showWarningMessage = MutableStateFlow(false)
+    val showWarningMessage: StateFlow<Boolean> = _showWarningMessage.asStateFlow()
 
     init {
         rebuildMesh()
@@ -89,6 +92,11 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
         val v = _poissonRatio.value.toDoubleOrNull() ?: return
         val p = _pressure.value.toDoubleOrNull() ?: return
 
+        if (femBody.fixedFaces.isEmpty() || femBody.loadedFaces.isEmpty()) {
+            _showWarningMessage.value = true
+            return
+        }
+
         viewModelScope.launch {
             _isCalculating.value = true
 
@@ -99,5 +107,9 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
             _deformedBody.value = result
             _isCalculating.value = false
         }
+    }
+
+    fun hideWarningMessage() {
+        _showWarningMessage.value = false
     }
 }

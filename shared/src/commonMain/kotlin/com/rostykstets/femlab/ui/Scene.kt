@@ -85,6 +85,7 @@ import femlab.shared.generated.resources.split_x
 import femlab.shared.generated.resources.split_y
 import femlab.shared.generated.resources.split_z
 import femlab.shared.generated.resources.splits
+import femlab.shared.generated.resources.warning_message
 import femlab.shared.generated.resources.young_module
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
@@ -105,6 +106,8 @@ fun Scene() {
     val deformedBody by viewModel.deformedBody.collectAsState()
     val isCalculating by viewModel.isCalculating.collectAsState()
 
+    val showWarningMessage by viewModel.showWarningMessage.collectAsState()
+
     SceneContent(
         bodySize = bodySize,
         bodySplits = bodySplits,
@@ -114,6 +117,7 @@ fun Scene() {
         deformedBody = deformedBody,
         isCalculating = isCalculating,
         femBody = viewModel.femBody,
+        showWarningMessage = showWarningMessage,
         updateSize = viewModel::updateSize,
         updateSplits = viewModel::updateSplits,
         updateYoungModule = viewModel::updateYoungModule,
@@ -121,7 +125,8 @@ fun Scene() {
         updatePressure = viewModel::updatePressure,
         calculate = viewModel::calculate,
         toggleFaceFixed = viewModel::toggleFaceFixed,
-        toggleFaceLoaded = viewModel::toggleFaceLoaded
+        toggleFaceLoaded = viewModel::toggleFaceLoaded,
+        hideWarningMessage = viewModel::hideWarningMessage
     )
 }
 
@@ -131,6 +136,7 @@ private fun SceneContent(
     poissonRatio: String, pressure: String,
     deformedBody: DoubleArray?, isCalculating: Boolean,
     femBody: FEMBody,
+    showWarningMessage: Boolean,
     updateSize: (Vector3) -> Unit,
     updateSplits: (Vector3) -> Unit,
     updateYoungModule: (String) -> Unit,
@@ -139,6 +145,7 @@ private fun SceneContent(
     calculate: () -> Unit,
     toggleFaceFixed: (ElementFace) -> Unit,
     toggleFaceLoaded: (ElementFace) -> Unit,
+    hideWarningMessage: () -> Unit
 ) {
 
     var sizeX by remember(bodySize.x) { mutableStateOf(bodySize.x.toString()) }
@@ -218,6 +225,10 @@ private fun SceneContent(
                 .clickable(enabled = false, onClick = {}),
             showIndexes = showIndexes,
             toggleIndexesCheckbox = { showIndexes = it })
+
+        if (showWarningMessage) {
+            WarningMessage(hideWarningMessage)
+        }
     }
 }
 
@@ -855,6 +866,30 @@ private fun CalculatingIndicator(modifier: Modifier) {
 }
 
 @Composable
+private fun WarningMessage(hideWarningMessage: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize().background(color = Color.Gray.copy(alpha = 0.5f))
+            .clickable(enabled = true, onClick = hideWarningMessage),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(140.dp).background(
+                    color = Color.White,
+                    shape = RoundedCornerShape(8.dp)
+                ).padding(horizontal = 5.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            CustomText(
+                text = stringResource(Res.string.warning_message),
+                fontSize = 13.sp,
+                maxLines = 4
+            )
+        }
+    }
+}
+
+@Composable
 fun InfoMenu(
     modifier: Modifier,
     showIndexes: Boolean,
@@ -1138,6 +1173,7 @@ private fun ScenePreview() {
         deformedBody = null,
         isCalculating = false,
         femBody = FEMBody(),
+        showWarningMessage = true,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},
@@ -1145,6 +1181,7 @@ private fun ScenePreview() {
         updatePressure = {},
         calculate = {},
         toggleFaceFixed = {},
-        toggleFaceLoaded = {}
+        toggleFaceLoaded = {},
+        hideWarningMessage = {}
     )
 }
