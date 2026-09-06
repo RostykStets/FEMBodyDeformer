@@ -24,4 +24,10 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+## Tech Stack
+
+- **Language:** Kotlin 2.4.0
+- **Architecture:** Clean Architecture + MVVM
+- **DI:** Koin 4.2.2
+- **UI:** Jetpack Compose
+- **3D Engine:** Custom Vector3 class & custom SImpleCamera class to project FEM body, its faces and nodes
