@@ -21,7 +21,7 @@ kotlin {
     jvm()
     
     androidLibrary {
-       namespace = "com.rostykstets.femlab.shared"
+       namespace = "com.rostykstets.fembodydeformer.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
     
