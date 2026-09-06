@@ -24,6 +24,22 @@ Use the run configurations provided by the run widget in your IDE's toolbar. You
 
 ---
 
+## Project Structure
+
+```text
+.
+├── di/                       # Koin DI Module
+├── domain/                   # FEM-Body related models and Gauss Constants
+├── ui/                       # UI
+│   ├── models/               # Models of 3D Engine
+│   ├── scene/                # Application orchestration
+│       ├── components/       # Components of the scene such as control panel, info panel, body drawing etc.
+│       └── Scene.kt          # File with Scene's content
+│   ├── utilities/            # Defined colors and CustomText component
+│   ├── viewmodels/           # FEMVIewModel
+│   └── App.kt                # Main file where Scene function is called
+```
+
 ## Tech Stack
 
 - **Language:** Kotlin 2.4.0
