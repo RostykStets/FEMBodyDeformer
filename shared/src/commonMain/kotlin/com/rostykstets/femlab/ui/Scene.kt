@@ -68,6 +68,7 @@ import femlab.shared.generated.resources.baloo_bhai_2_regular
 import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
 import femlab.shared.generated.resources.dimensions
+import femlab.shared.generated.resources.drag_scene_info
 import femlab.shared.generated.resources.fixed_face_info
 import femlab.shared.generated.resources.fixed_face_type
 import femlab.shared.generated.resources.left_angle_bracket
@@ -87,6 +88,7 @@ import femlab.shared.generated.resources.split_z
 import femlab.shared.generated.resources.splits
 import femlab.shared.generated.resources.warning_message
 import femlab.shared.generated.resources.young_module
+import femlab.shared.generated.resources.zoom_info
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -956,7 +958,9 @@ private fun InfoPanel(
         modifier = modifier
             .width(170.dp)
             .background(Color.White.copy(alpha = 0.9f), shape)
+            .verticalScroll(rememberScrollState())
             .padding(8.dp)
+            .fillMaxHeight()
     ) {
         CustomText(
             modifier = Modifier.padding(bottom = 4.dp),
@@ -979,6 +983,10 @@ private fun InfoPanel(
         Spacer(modifier = Modifier.height(8.dp))
 
         FacesInfo()
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SceneInteractionInfo()
     }
 }
 
@@ -1060,6 +1068,28 @@ private fun FaceInfo(color: Color, faceType: String, faceInfo: String) {
         text = faceInfo,
         maxLines = 3,
         fontSize = fontSize
+    )
+}
+
+@Composable
+private fun SceneInteractionInfo() {
+
+    val fontSize = 13.sp
+
+    CustomText(
+        text = stringResource(Res.string.zoom_info),
+        maxLines = 5,
+        fontSize = fontSize,
+        centerText = false
+    )
+
+    Spacer(modifier = Modifier.height(5.dp))
+
+    CustomText(
+        text = stringResource(Res.string.drag_scene_info),
+        maxLines = 5,
+        fontSize = fontSize,
+        centerText = false
     )
 }
 
@@ -1173,7 +1203,7 @@ private fun ScenePreview() {
         deformedBody = null,
         isCalculating = false,
         femBody = FEMBody(),
-        showWarningMessage = true,
+        showWarningMessage = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},

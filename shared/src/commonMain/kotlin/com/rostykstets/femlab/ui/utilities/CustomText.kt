@@ -19,7 +19,8 @@ fun CustomText(
     text: String,
     fontSize: TextUnit = 14.sp,
     color: Color = Color.Black,
-    maxLines: Int = 1
+    maxLines: Int = 1,
+    centerText: Boolean = true
 ) {
 
     val customFontFamily = FontFamily(Font(Res.font.baloo_bhai_2_regular))
@@ -29,6 +30,6 @@ fun CustomText(
         text = text,
         style = TextStyle(fontSize = fontSize, color = color, fontFamily = customFontFamily),
         maxLines = maxLines,
-        textAlign = TextAlign.Center
+        textAlign = if(centerText) TextAlign.Center else TextAlign.Start
     )
 }
