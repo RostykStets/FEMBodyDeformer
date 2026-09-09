@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rostykstets.fembodydeformer.ui.utilities.CustomText
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.fixed_face_info
@@ -46,16 +45,11 @@ fun FacesInfo() {
 @Composable
 private fun FaceInfo(color: Color, faceType: String, faceInfo: String) {
 
-    val fontSize = 13.sp
-
     Row(verticalAlignment = Alignment.CenterVertically) {
 
         Box(modifier = Modifier.size(20.dp).background(color = color))
 
-        CustomText(
-            text = " - $faceType",
-            fontSize = fontSize
-        )
+        CustomText(text = " - $faceType")
     }
 
     Spacer(modifier = Modifier.height(5.dp))
@@ -63,6 +57,5 @@ private fun FaceInfo(color: Color, faceType: String, faceInfo: String) {
     CustomText(
         text = faceInfo,
         maxLines = 3,
-        fontSize = fontSize
     )
 }

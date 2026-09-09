@@ -55,7 +55,7 @@ fun InfoMenu(
 
     val interactionSource = remember { MutableInteractionSource() }
 
-    val menuWidth = if (showPanel) 210.dp else 40.dp
+    val menuWidth = if (showPanel) 220.dp else 40.dp
 
     val shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp)
 
@@ -109,7 +109,7 @@ private fun InfoPanel(
 
     Column(
         modifier = modifier
-            .width(170.dp)
+            .width(180.dp)
             .background(Color.White.copy(alpha = 0.9f), shape)
             .verticalScroll(rememberScrollState())
             .padding(8.dp)
@@ -118,7 +118,6 @@ private fun InfoPanel(
         CustomText(
             modifier = Modifier.padding(bottom = 4.dp),
             text = stringResource(Res.string.axes),
-            fontSize = 13.sp,
             color = Color.Gray
         )
 
@@ -169,12 +168,9 @@ fun IndexesCheckbox(showIndexes: Boolean, toggleIndexesCheckbox: (Boolean) -> Un
 @Composable
 private fun SceneInteractionInfo() {
 
-    val fontSize = 13.sp
-
     CustomText(
         text = stringResource(Res.string.zoom_info),
         maxLines = 5,
-        fontSize = fontSize,
         centerText = false
     )
 
@@ -183,7 +179,6 @@ private fun SceneInteractionInfo() {
     CustomText(
         text = stringResource(Res.string.drag_scene_info),
         maxLines = 5,
-        fontSize = fontSize,
         centerText = false
     )
 }
