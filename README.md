@@ -7,6 +7,10 @@
 This application is a cross-platform tool for 3D modeling and analyzing the stress-strain state of spatial structures using the Finite Element Method (FEM). The program generates a mesh of 20-node isoparametric finite elements, allows interactive application of boundary conditions (fixations and pressure), and calculates the displacement vector, stress tensor, and principal stresses of the material.
 The project is developed using Kotlin Multiplatform, allowing it to run on Android, iOS, and Desktop (JVM) using a single codebase for business logic and UI.
 
+![FEM Body Deformer Preview](docs/preview.png)
+
+---
+
 ## Core Features
 
 - **Dynamic Mesh Generation:** Constructs a 3D mesh for a rectangular parallelepiped with user-defined dimensions and subdivision counts along the X, Y, and Z axes.
@@ -18,6 +22,8 @@ The project is developed using Kotlin Multiplatform, allowing it to run on Andro
   -	Solving the global System of Linear Algebraic Equations (SLAE) using the iterative Conjugate Gradient Method.
 - **Results Analysis:** Visualization of the deformed state of the structure (a red wireframe rendered over the initial gray one) and a detailed text verification report containing numerical values of matrices, displacements, and stresses.
 
+---
+
 ## Tech Stack
 
 - **Language:** Kotlin 2.4.20
@@ -26,6 +32,8 @@ The project is developed using Kotlin Multiplatform, allowing it to run on Andro
 - **UI:** Compose Multiplatform (Jetpack Compose)
 - **3D Engine:** Custom Vector3 class & custom SimpleCamera class to project the FEM body, its faces, and nodes.
 - **Concurrency:** Kotlin Coroutines (Dispatchers.Default for SLAE calculation parallelization).
+
+---
 
 ## Project Structure
 
@@ -54,6 +62,8 @@ Detailed commonMain Structure:
 ```
 
 ## Running the apps
+
+---
 
 Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
 - Android app:
