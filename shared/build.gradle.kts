@@ -68,8 +68,11 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
 
-            // Serialization
+            // Serialization dependency
             implementation(libs.kotlinx.serialization.json)
+
+            // DateTime dependency
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

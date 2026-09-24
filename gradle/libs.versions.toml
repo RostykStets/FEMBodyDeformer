@@ -8,6 +8,7 @@ androidx-lifecycle = "2.11.0"
 composeMultiplatform = "1.12.0"
 kotlin = "2.4.20"
 kotlinx-coroutines = "1.11.0"
+kotlinxDatetime = "0.8.0"
 material3 = "1.9.0"
 koin = "4.2.2"
 koinComposeMultiplatform = "4.2.2"
@@ -46,6 +47,9 @@ androidx-room-sqlite-wrapper = { module = "androidx.room:room-sqlite-wrapper", v
 
 # Serialization
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# DateTIme
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
