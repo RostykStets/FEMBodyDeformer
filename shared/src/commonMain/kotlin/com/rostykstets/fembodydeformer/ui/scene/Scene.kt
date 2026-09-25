@@ -37,6 +37,8 @@ import com.rostykstets.fembodydeformer.ui.models.Vector3
 import com.rostykstets.fembodydeformer.ui.scene.components.body.RenderBody
 import com.rostykstets.fembodydeformer.ui.scene.components.menus.infoMenu.InfoMenu
 import com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu.SideMenu
+import com.rostykstets.fembodydeformer.ui.utilities.SCREEN_HEIGHT_DESKTOP
+import com.rostykstets.fembodydeformer.ui.utilities.SCREEN_WIDTH_DESKTOP
 import com.rostykstets.fembodydeformer.ui.viewmodels.FEMViewModel
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.warning_message
@@ -343,8 +345,8 @@ private fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
 }
 
 @Preview(
-    widthDp = 900,
-    heightDp = 600
+    widthDp = SCREEN_WIDTH_DESKTOP,
+    heightDp = SCREEN_HEIGHT_DESKTOP
 )
 @Composable
 private fun ScenePreview() {
