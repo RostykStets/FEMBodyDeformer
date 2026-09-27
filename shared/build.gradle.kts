@@ -73,6 +73,12 @@ kotlin {
 
             // DateTime dependency
             implementation(libs.kotlinx.datetime)
+
+            // Navigation dependency
+            implementation(libs.navigation.compose)
+
+            // NavigationEvent dependency
+            implementation(libs.compose.navigationevent)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
