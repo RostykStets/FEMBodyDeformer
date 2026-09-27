@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.scene.components.menus.infoMenu.axes
+package com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.infoMenu.axes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.rostykstets.fembodydeformer.ui.utilities.CustomText
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
 
 @Composable
 fun AxisRow(axisName: String, axisColor: Color) {

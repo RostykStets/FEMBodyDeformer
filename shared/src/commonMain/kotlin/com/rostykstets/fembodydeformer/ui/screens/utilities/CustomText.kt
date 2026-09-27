@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.utilities
+package com.rostykstets.fembodydeformer.ui.screens.utilities
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

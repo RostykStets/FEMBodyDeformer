@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.scene.components.menus.infoMenu
+package com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.infoMenu
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -28,10 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.infoMenu.axes.AxisRow
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.infoMenu.facesInfo.FacesInfo
-import com.rostykstets.fembodydeformer.ui.utilities.CustomText
-import com.rostykstets.fembodydeformer.ui.utilities.VeryLightGray
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.infoMenu.axes.AxisRow
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.infoMenu.facesInfo.FacesInfo
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
+import com.rostykstets.fembodydeformer.ui.screens.utilities.VeryLightGray
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.axes
 import femlab.shared.generated.resources.axis_x
@@ -89,7 +89,7 @@ fun InfoMenu(
         }
 
         AnimatedVisibility(visible = showPanel) {
-            InfoPanel(
+           InfoPanel(
                 modifier = modifier,
                 showIndexes = showIndexes,
                 toggleIndexesCheckbox = toggleIndexesCheckbox
@@ -121,11 +121,20 @@ private fun InfoPanel(
             color = Color.Gray
         )
 
-        AxisRow(axisName = stringResource(Res.string.axis_x), axisColor = Color.Red)
+        AxisRow(
+            axisName = stringResource(Res.string.axis_x),
+            axisColor = Color.Red
+        )
 
-        AxisRow(axisName = stringResource(Res.string.axis_y), axisColor = Color.Green)
+        AxisRow(
+            axisName = stringResource(Res.string.axis_y),
+            axisColor = Color.Green
+        )
 
-        AxisRow(axisName = stringResource(Res.string.axis_z), axisColor = Color.Blue)
+        AxisRow(
+            axisName = stringResource(Res.string.axis_z),
+            axisColor = Color.Blue
+        )
 
         IndexesCheckbox(
             showIndexes = showIndexes,

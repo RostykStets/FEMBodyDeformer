@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu.splits
+package com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu.splits
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.OutlinedTextField
@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.rostykstets.fembodydeformer.ui.models.Vector3
-import com.rostykstets.fembodydeformer.ui.utilities.CustomText
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.split_x
 import femlab.shared.generated.resources.split_y

@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.utilities
+package com.rostykstets.fembodydeformer.ui.screens.utilities
 
 import androidx.compose.ui.graphics.Color
 
@@ -9,3 +9,5 @@ val VeryLightGray = Color(0xFFE0E0E0)
 val PureBlue = Color(0xFF0055FF)
 
 val VeryLightGray2 = Color(0xFFF5F5F5)
+
+val DarkRed = Color(0xFFB02017)

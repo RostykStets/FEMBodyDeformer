@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.scene.components.body
+package com.rostykstets.fembodydeformer.ui.screens.scene.components.body
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +17,7 @@ import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.ProjectedFace
 import com.rostykstets.fembodydeformer.ui.models.SimpleCamera
 import com.rostykstets.fembodydeformer.ui.models.Vector3
-import com.rostykstets.fembodydeformer.ui.utilities.PureBlue
+import com.rostykstets.fembodydeformer.ui.screens.utilities.PureBlue
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.baloo_bhai_2_regular
 import org.jetbrains.compose.resources.Font

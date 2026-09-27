@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.scene
+package com.rostykstets.fembodydeformer.ui.screens.scene
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,16 +30,18 @@ import androidx.compose.ui.unit.sp
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.ProjectedFace
-import com.rostykstets.fembodydeformer.ui.utilities.CustomText
-import com.rostykstets.fembodydeformer.ui.utilities.VeryLightGray2
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
+import com.rostykstets.fembodydeformer.ui.screens.utilities.VeryLightGray2
 import com.rostykstets.fembodydeformer.ui.models.SimpleCamera
 import com.rostykstets.fembodydeformer.ui.models.Vector3
-import com.rostykstets.fembodydeformer.ui.scene.components.body.RenderBody
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.infoMenu.InfoMenu
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu.SideMenu
-import com.rostykstets.fembodydeformer.ui.utilities.SCREEN_HEIGHT_DESKTOP
-import com.rostykstets.fembodydeformer.ui.utilities.SCREEN_WIDTH_DESKTOP
-import com.rostykstets.fembodydeformer.ui.viewmodels.FEMViewModel
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.body.RenderBody
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.infoMenu.InfoMenu
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu.SideMenu
+import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_DESKTOP
+import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_MOBILE
+import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_DESKTOP
+import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_MOBILE
+import com.rostykstets.fembodydeformer.ui.screens.scene.viewmodels.FEMViewModel
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.warning_message
 import org.jetbrains.compose.resources.stringResource
@@ -47,7 +49,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.exp
 
 @Composable
-fun Scene() {
+fun SceneScreen() {
 
     val viewModel: FEMViewModel = koinViewModel()
 
@@ -63,7 +65,7 @@ fun Scene() {
 
     val showWarningMessage by viewModel.showWarningMessage.collectAsState()
 
-    SceneContent(
+   SceneContent(
         bodySize = bodySize,
         bodySplits = bodySplits,
         youngModule = youngModule,
@@ -172,7 +174,9 @@ private fun SceneContent(
             calculate = calculate
         )
 
-        if (isCalculating) CalculatingIndicator(modifier = Modifier.matchParentSize())
+        if (isCalculating) CalculatingIndicator(
+            modifier = Modifier.matchParentSize()
+        )
 
         InfoMenu(
             modifier = Modifier
@@ -182,7 +186,9 @@ private fun SceneContent(
             toggleIndexesCheckbox = { showIndexes = it })
 
         if (showWarningMessage) {
-            WarningMessage(hideWarningMessage)
+            WarningMessage(
+                hideWarningMessage
+            )
         }
     }
 }
@@ -199,11 +205,19 @@ fun Modifier.faceSelectionGestures(
 
     detectTapGestures(
         onTap = { clickOffset ->
-            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+            val clickedFace =
+                findClickedFace(
+                    clickOffset,
+                    projectedFacesList
+                )
             if (clickedFace != null) onToggleFixed(clickedFace)
         },
         onLongPress = { clickOffset ->
-            val clickedFace = findClickedFace(clickOffset, projectedFacesList)
+            val clickedFace =
+                findClickedFace(
+                    clickOffset,
+                    projectedFacesList
+                )
             if (clickedFace != null) onToggleLoaded(clickedFace)
         }
     )
@@ -323,7 +337,11 @@ private fun findClickedFace(click: Offset, projectedFaces: List<ProjectedFace>):
 
     for (projected in sortedFaces) {
         if (projected.vertices.size < 4) continue
-        if (isPointInPolygon(click, projected.vertices)) {
+        if (isPointInPolygon(
+                click,
+                projected.vertices
+            )
+        ) {
             return projected.face
         }
     }
@@ -349,7 +367,35 @@ private fun isPointInPolygon(p: Offset, poly: List<Offset>): Boolean {
     heightDp = SCREEN_HEIGHT_DESKTOP
 )
 @Composable
-private fun ScenePreview() {
+private fun SceneDesktopPreview() {
+    SceneContent(
+        bodySize = Vector3(4f, 4f, 4f),
+        bodySplits = Vector3(2f, 1f, 2f),
+        youngModule = "4",
+        poissonRatio = "0.3",
+        pressure = "2",
+        deformedBody = null,
+        isCalculating = false,
+        femBody = FEMBody(),
+        showWarningMessage = false,
+        updateSize = {},
+        updateSplits = {},
+        updateYoungModule = {},
+        updatePoissonRatio = {},
+        updatePressure = {},
+        calculate = {},
+        toggleFaceFixed = {},
+        toggleFaceLoaded = {},
+        hideWarningMessage = {}
+    )
+}
+
+@Preview(
+    widthDp = SCREEN_WIDTH_MOBILE,
+    heightDp = SCREEN_HEIGHT_MOBILE
+)
+@Composable
+private fun SceneMobilePreview() {
     SceneContent(
         bodySize = Vector3(4f, 4f, 4f),
         bodySplits = Vector3(2f, 1f, 2f),

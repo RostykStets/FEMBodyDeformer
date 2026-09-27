@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.viewmodels
+package com.rostykstets.fembodydeformer.ui.screens.scene.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

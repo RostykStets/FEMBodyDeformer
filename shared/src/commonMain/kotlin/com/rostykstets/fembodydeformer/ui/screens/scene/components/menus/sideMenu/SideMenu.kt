@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu
+package com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -28,10 +28,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rostykstets.fembodydeformer.ui.models.Vector3
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu.parameters.Parameters
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu.sizes.BodySizes
-import com.rostykstets.fembodydeformer.ui.scene.components.menus.sideMenu.splits.BodySplits
-import com.rostykstets.fembodydeformer.ui.utilities.CustomText
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu.parameters.Parameters
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu.sizes.BodySizes
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu.splits.BodySplits
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.calculate
 import femlab.shared.generated.resources.calculating
