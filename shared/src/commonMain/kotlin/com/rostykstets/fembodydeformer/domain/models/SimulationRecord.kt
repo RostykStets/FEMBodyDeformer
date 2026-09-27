@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDateTime
 
 data class SimulationRecord(
     val id: Int,
+    val title: String,
     val dateAdded: LocalDateTime,
     val dateModified: LocalDateTime,
     val sizeX: Float,

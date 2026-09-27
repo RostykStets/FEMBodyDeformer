@@ -9,6 +9,8 @@ data class SimulationRecordEntity(
     @ColumnInfo(name = "id")
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    @ColumnInfo(name = "title")
+    val title: String = "",
     @ColumnInfo(name = "date_added")
     val dateAdded: Long,
     @ColumnInfo(name = "date_modified")

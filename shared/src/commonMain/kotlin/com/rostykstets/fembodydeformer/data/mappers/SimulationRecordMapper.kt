@@ -13,6 +13,7 @@ import kotlin.time.Instant
 fun SimulationRecordEntity.toModel(): SimulationRecord {
     return SimulationRecord(
         id = this.id,
+        title = this.title,
         dateAdded = this.dateAdded.toLocalDateTime(),
         dateModified = this.dateModified.toLocalDateTime(),
         sizeX = this.sizeX,
@@ -34,6 +35,7 @@ fun SimulationRecord.toEntity(): SimulationRecordEntity {
 
     return SimulationRecordEntity(
         id = this.id,
+        title = this.title,
         dateAdded = this.dateAdded.toLong(),
         dateModified = this.dateModified.toLong(),
         sizeX = this.sizeX,
