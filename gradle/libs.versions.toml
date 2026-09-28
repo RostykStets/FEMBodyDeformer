@@ -19,6 +19,7 @@ ksp = "2.3.12"
 kotlinxSerialization = "1.11.0"
 navigationCompose = "2.9.2"
 composeNavigationEvent = "1.1.0"
+materialIconsExtendedVersion = "1.7.3"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -55,8 +56,13 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 
 # Navigation
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+
 # NavigationEvent
 compose-navigationevent = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "composeNavigationEvent" }
+
+# Material Icons Extended
+compose-materialIconsCore = { module = "org.jetbrains.compose.material:material-icons-core", version.ref = "materialIconsExtendedVersion" }
+compose-materialIconsExtended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtendedVersion" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

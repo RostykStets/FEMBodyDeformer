@@ -79,6 +79,10 @@ kotlin {
 
             // NavigationEvent dependency
             implementation(libs.compose.navigationevent)
+
+            // Material Icon Extended dependency
+            implementation(libs.compose.materialIconsCore)
+            implementation(libs.compose.materialIconsExtended)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

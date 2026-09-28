@@ -28,6 +28,7 @@ class RecordsViewModel(private val getSimulationRecordsUseCase: GetSimulationRec
         viewModelScope.launch {
             getSimulationRecordsUseCase().collect {
                 _records.value = it
+                _isLoading.value = false
             }
         }
     }
