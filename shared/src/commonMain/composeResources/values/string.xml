@@ -27,4 +27,11 @@
     <string name="warning_message">Оберіть зафіксовані та навантажені грані для обчислення!</string>
     <string name="zoom_info">Щоб збільшити/зменшити сцену, прокрутіть коліщатко мишки або розведіть два пальці на екрані телефону</string>
     <string name="drag_scene_info">Щоб пересунути тіло, затисніть ПКМ або три пальці на екрані і пересуньте тіло</string>
+    <string name="create_new_project">Створити новий проєкт</string>
+    <string name="type_project_title">Введіть назву проєкту:</string>
+    <string name="project_title_label">Назва проєкту</string>
+    <string name="cancel">Скасувати</string>
+    <string name="create">Створити</string>
+    <string name="records">Записи</string>
+    <string name="no_records">Нема записів</string>
 </resources>

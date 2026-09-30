@@ -1,5 +1,8 @@
 package com.rostykstets.fembodydeformer.ui.screens.records
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,7 +25,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +37,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
+import com.rostykstets.fembodydeformer.ui.screens.records.components.NewSimulationRecordDialog
 import com.rostykstets.fembodydeformer.ui.screens.records.components.RecordItem
 import com.rostykstets.fembodydeformer.ui.screens.records.viewmodels.RecordsViewModel
 import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
@@ -40,9 +46,13 @@ import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_DESKTOP
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.utilities.VeryLightGray
+import femlab.shared.generated.resources.Res
+import femlab.shared.generated.resources.no_records
+import femlab.shared.generated.resources.records
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 
@@ -54,11 +64,25 @@ fun RecordsScreen() {
     val records by recordsViewModel.records.collectAsState()
     val isLoading by recordsViewModel.isLoading.collectAsState()
 
+    var showDialog by remember { mutableStateOf(false) }
+
     RecordsContent(
         records = records,
         isLoading = isLoading,
         openRecord = {},
+        addRecord = { showDialog = true },
         onBack = {})
+
+    AnimatedVisibility(
+        visible = showDialog,
+        enter = EnterTransition.None,
+        exit = ExitTransition.None
+    ) {
+        NewSimulationRecordDialog(
+            onDismiss = { showDialog = false },
+            onCreateRecord = {}
+        )
+    }
 }
 
 @Composable
@@ -66,6 +90,7 @@ private fun RecordsContent(
     records: List<SimulationRecord>,
     isLoading: Boolean,
     openRecord: (SimulationRecord) -> Unit,
+    addRecord: () -> Unit,
     onBack: () -> Unit
 ) {
 
@@ -81,7 +106,7 @@ private fun RecordsContent(
 
         Spacer(modifier = Modifier.weight(0.2f))
 
-        TopBar(onBack = onBack)
+        TopBar(onBack = onBack, createRecord = addRecord)
 
         Spacer(modifier = Modifier.weight(0.2f))
 
@@ -99,7 +124,7 @@ private fun RecordsContent(
             ) {
                 Spacer(modifier = Modifier.weight(0.5f))
 
-                CustomText(text = "Нема записів", fontSize = 25.sp)
+                CustomText(text = stringResource(Res.string.no_records), fontSize = 25.sp)
 
                 Spacer(modifier = Modifier.weight(1f))
             }
@@ -118,7 +143,10 @@ private fun RecordsContent(
 }
 
 @Composable
-private fun TopBar(onBack: () -> Unit) {
+private fun TopBar(
+    onBack: () -> Unit,
+    createRecord: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -137,7 +165,7 @@ private fun TopBar(onBack: () -> Unit) {
                 )
         )
 
-        CustomText(text = "Записи", fontSize = 28.sp)
+        CustomText(text = stringResource(Res.string.records), fontSize = 28.sp)
 
         Icon(
             imageVector = Icons.Default.Add,
@@ -148,7 +176,7 @@ private fun TopBar(onBack: () -> Unit) {
                     enabled = true,
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = {}
+                    onClick = createRecord
                 )
         )
     }
@@ -204,6 +232,7 @@ private fun RecordsDesktopPreview() {
         ),
         isLoading = false,
         openRecord = {},
+        addRecord = {},
         onBack = {}
     )
 }
@@ -258,6 +287,7 @@ private fun RecordsMobilePreview() {
         ),
         isLoading = false,
         openRecord = {},
+        addRecord = {},
         onBack = {}
     )
 }
