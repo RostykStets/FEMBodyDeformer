@@ -37,6 +37,8 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
+import com.rostykstets.fembodydeformer.ui.navigation.localNavController
+import com.rostykstets.fembodydeformer.ui.routing.SceneScreen
 import com.rostykstets.fembodydeformer.ui.screens.records.components.NewSimulationRecordDialog
 import com.rostykstets.fembodydeformer.ui.screens.records.components.RecordItem
 import com.rostykstets.fembodydeformer.ui.screens.records.viewmodels.RecordsViewModel
@@ -59,17 +61,27 @@ import kotlin.time.Clock
 @Composable
 fun RecordsScreen() {
 
+    val navController = localNavController.current
+
     val recordsViewModel: RecordsViewModel = koinViewModel()
 
     val records by recordsViewModel.records.collectAsState()
     val isLoading by recordsViewModel.isLoading.collectAsState()
 
+    val isSavingRecord by recordsViewModel.isSavingRecord.collectAsState()
+
     var showDialog by remember { mutableStateOf(false) }
+
+    fun navigateToScene(id: Int) {
+        navController.navigate(route = SceneScreen(id = id)) {
+            launchSingleTop = true
+        }
+    }
 
     RecordsContent(
         records = records,
         isLoading = isLoading,
-        openRecord = {},
+        openRecord = { id -> navigateToScene(id) },
         addRecord = { showDialog = true },
         onBack = {})
 
@@ -79,8 +91,13 @@ fun RecordsScreen() {
         exit = ExitTransition.None
     ) {
         NewSimulationRecordDialog(
+            isSavingRecord = isSavingRecord,
             onDismiss = { showDialog = false },
-            onCreateRecord = {}
+            onCreateRecord = { title ->
+                recordsViewModel.createRecord(title, onCreateRecord = { id ->
+                    navigateToScene(id)
+                })
+            }
         )
     }
 }
@@ -89,7 +106,7 @@ fun RecordsScreen() {
 private fun RecordsContent(
     records: List<SimulationRecord>,
     isLoading: Boolean,
-    openRecord: (SimulationRecord) -> Unit,
+    openRecord: (id: Int) -> Unit,
     addRecord: () -> Unit,
     onBack: () -> Unit
 ) {

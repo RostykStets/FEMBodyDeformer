@@ -26,7 +26,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
 @Composable
-fun RecordItem(simulationRecord: SimulationRecord, onClick: (SimulationRecord) -> Unit) {
+fun RecordItem(simulationRecord: SimulationRecord, onClick: (id: Int) -> Unit) {
 
     val rowWidthFraction = 0.7f
     val rowHeightFraction = 0.07f
@@ -45,7 +45,7 @@ fun RecordItem(simulationRecord: SimulationRecord, onClick: (SimulationRecord) -
                 enabled = true,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() },
-                onClick = { onClick(simulationRecord) }),
+                onClick = { onClick(simulationRecord.id) }),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

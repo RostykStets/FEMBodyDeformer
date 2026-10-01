@@ -9,5 +9,5 @@ val viewModelModule = module {
 
     viewModel { FEMViewModel(get()) }
 
-    viewModel { RecordsViewModel(get()) }
+    viewModel { RecordsViewModel(get(), get()) }
 }

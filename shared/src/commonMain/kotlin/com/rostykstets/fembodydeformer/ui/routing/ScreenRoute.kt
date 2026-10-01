@@ -3,7 +3,7 @@ package com.rostykstets.fembodydeformer.ui.routing
 import kotlinx.serialization.Serializable
 
 @Serializable
-object SceneScreen
+data class SceneScreen(val id: Int)
 
 @Serializable
 object RecordsScreen

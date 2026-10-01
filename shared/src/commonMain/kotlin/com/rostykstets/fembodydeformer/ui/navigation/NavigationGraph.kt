@@ -7,6 +7,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.rostykstets.fembodydeformer.ui.routing.RecordsScreen
 import com.rostykstets.fembodydeformer.ui.routing.SceneScreen
 import com.rostykstets.fembodydeformer.ui.screens.records.RecordsScreen
@@ -28,8 +29,9 @@ fun NavigationGraph() {
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { ExitTransition.None }
         ) {
-            composable<SceneScreen> {
-                SceneScreen()
+            composable<SceneScreen> { backStackEntry ->
+                val sceneScreen = backStackEntry.toRoute<SceneScreen>()
+                SceneScreen(simulationRecordId = sceneScreen.id)
             }
 
             composable<RecordsScreen> {

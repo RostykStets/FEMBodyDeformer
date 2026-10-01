@@ -55,7 +55,7 @@ import kotlin.math.exp
 import kotlin.time.Clock
 
 @Composable
-fun SceneScreen() {
+fun SceneScreen(simulationRecordId: Int) {
 
     val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
@@ -68,7 +68,7 @@ fun SceneScreen() {
 
     val femViewModel: FEMViewModel = koinViewModel()
 
-    LaunchedEffect(testSimulationRecord.id) {
+    LaunchedEffect(simulationRecordId) {
         femViewModel.mapDataFromSimulationRecord(testSimulationRecord)
     }
 

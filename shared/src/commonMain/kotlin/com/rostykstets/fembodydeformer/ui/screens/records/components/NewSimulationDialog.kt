@@ -2,6 +2,7 @@ package com.rostykstets.fembodydeformer.ui.screens.records.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,9 +47,11 @@ import femlab.shared.generated.resources.type_project_title
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun NewSimulationRecordDialog(onDismiss: () -> Unit, onCreateRecord: (String) -> Unit) {
-
-    val interactionSource = remember { MutableInteractionSource() }
+fun NewSimulationRecordDialog(
+    isSavingRecord: Boolean,
+    onDismiss: () -> Unit,
+    onCreateRecord: (String) -> Unit
+) {
 
     val dialogWidth = 400.dp
     val dialogHeight = 300.dp
@@ -61,17 +66,18 @@ fun NewSimulationRecordDialog(onDismiss: () -> Unit, onCreateRecord: (String) ->
     Box(
         modifier = Modifier.fillMaxSize()
             .background(color = VeryDarkGray.copy(alpha = 0.3f))
-            .clickable(
-                enabled = true,
-                indication = null,
-                interactionSource = interactionSource,
-                onClick = onDismiss
-            ),
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onDismiss() })
+            },
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.background(color = VeryLightGray, shape = shape)
+            modifier = Modifier
                 .size(width = dialogWidth, height = dialogHeight)
+                .background(color = VeryLightGray, shape = shape)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {})
+                }
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -108,18 +114,32 @@ fun NewSimulationRecordDialog(onDismiss: () -> Unit, onCreateRecord: (String) ->
             ) {
                 DialogButton(
                     text = stringResource(Res.string.cancel),
-                    interactionSource = interactionSource,
+                    isClickable = !isSavingRecord,
                     onClick = onDismiss
                 )
 
                 DialogButton(
                     text = stringResource(Res.string.create),
-                    interactionSource = interactionSource,
+                    isClickable = !isSavingRecord,
                     onClick = { onCreateRecord(newProjectTitle) }
                 )
             }
 
             Spacer(modifier = Modifier.weight(0.2f))
+        }
+
+        if (isSavingRecord) {
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .background(color = VeryDarkGray.copy(alpha = 0.5f))
+                    .clickable(
+                        enabled = false,
+                        onClick = {}
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(40.dp), color = Color.Magenta)
+            }
         }
     }
 }
@@ -127,18 +147,20 @@ fun NewSimulationRecordDialog(onDismiss: () -> Unit, onCreateRecord: (String) ->
 @Composable
 private fun DialogButton(
     text: String,
-    interactionSource: MutableInteractionSource,
+    isClickable: Boolean,
     onClick: () -> Unit
 ) {
 
     val shape = RoundedCornerShape(16.dp)
+
+    val interactionSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = Modifier
             .size(width = 100.dp, height = 50.dp)
             .background(color = DarkRed, shape = shape)
             .clickable(
-                enabled = true,
+                enabled = isClickable,
                 indication = null,
                 interactionSource = interactionSource,
                 onClick = onClick
@@ -155,7 +177,10 @@ private fun DialogButton(
 )
 @Composable
 private fun NewSimulationDialogDesktopPreview() {
-    NewSimulationRecordDialog(onDismiss = {}, onCreateRecord = {})
+    NewSimulationRecordDialog(
+        isSavingRecord = true,
+        onDismiss = {},
+        onCreateRecord = {})
 }
 
 @Preview(
@@ -164,5 +189,8 @@ private fun NewSimulationDialogDesktopPreview() {
 )
 @Composable
 private fun NewSimulationDialogMobilePreview() {
-    NewSimulationRecordDialog(onDismiss = {}, onCreateRecord = {})
+    NewSimulationRecordDialog(
+        isSavingRecord = false,
+        onDismiss = {},
+        onCreateRecord = {})
 }
