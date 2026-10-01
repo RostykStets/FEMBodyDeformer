@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.ProjectedFace
-import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
 import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
 import com.rostykstets.fembodydeformer.ui.screens.utilities.VeryLightGray2
 import com.rostykstets.fembodydeformer.ui.models.SimpleCamera
@@ -47,29 +46,17 @@ import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.scene.viewmodels.FEMViewModel
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.warning_message
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.exp
-import kotlin.time.Clock
 
 @Composable
 fun SceneScreen(simulationRecordId: Int) {
 
-    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-
-    val testSimulationRecord = SimulationRecord(
-        id = 0,
-        title = "",
-        dateAdded = now,
-        dateModified = now
-    )
-
     val femViewModel: FEMViewModel = koinViewModel()
 
     LaunchedEffect(simulationRecordId) {
-        femViewModel.mapDataFromSimulationRecord(testSimulationRecord)
+        femViewModel.handleSimulationRecordId(simulationRecordId)
     }
 
     val bodySize by femViewModel.bodySize.collectAsState()
@@ -86,6 +73,8 @@ fun SceneScreen(simulationRecordId: Int) {
 
     val isMappingData by femViewModel.isMappingData.collectAsState()
 
+    val isLoadingData by femViewModel.isLoadingData.collectAsState()
+
     SceneContent(
         bodySize = bodySize,
         bodySplits = bodySplits,
@@ -97,6 +86,7 @@ fun SceneScreen(simulationRecordId: Int) {
         femBody = femViewModel.femBody,
         showWarningMessage = showWarningMessage,
         isMappingData = isMappingData,
+        isLoadingData = isLoadingData,
         updateSize = femViewModel::updateSize,
         updateSplits = femViewModel::updateSplits,
         updateYoungModule = femViewModel::updateYoungModule,
@@ -117,6 +107,7 @@ private fun SceneContent(
     femBody: FEMBody,
     showWarningMessage: Boolean,
     isMappingData: Boolean,
+    isLoadingData: Boolean,
     updateSize: (Vector3) -> Unit,
     updateSplits: (Vector3) -> Unit,
     updateYoungModule: (String) -> Unit,
@@ -197,7 +188,7 @@ private fun SceneContent(
             calculate = calculate
         )
 
-        if (isCalculating || isMappingData) CalculatingIndicator(
+        if (isCalculating || isMappingData || isLoadingData) CalculatingIndicator(
             modifier = Modifier.matchParentSize()
         )
 
@@ -410,6 +401,7 @@ private fun SceneDesktopPreview() {
         femBody = FEMBody(),
         showWarningMessage = false,
         isMappingData = false,
+        isLoadingData = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},
@@ -439,6 +431,7 @@ private fun SceneMobilePreview() {
         femBody = FEMBody(),
         showWarningMessage = false,
         isMappingData = false,
+        isLoadingData = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},

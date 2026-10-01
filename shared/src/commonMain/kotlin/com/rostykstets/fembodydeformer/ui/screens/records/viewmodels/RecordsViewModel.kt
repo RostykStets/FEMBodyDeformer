@@ -16,8 +16,8 @@ import kotlin.time.Clock
 
 class RecordsViewModel(
     private val getSimulationRecordsUseCase: GetSimulationRecordsUseCase,
-    private val saveSimulationRecordUseCase: SaveSimulationRecordUseCase) :
-    ViewModel() {
+    private val saveSimulationRecordUseCase: SaveSimulationRecordUseCase
+) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
@@ -48,9 +48,11 @@ class RecordsViewModel(
 
     fun createRecord(title: String, onCreateRecord: (id: Int) -> Unit) {
 
-        saveRecord(title)
+        viewModelScope.launch {
+            saveRecord(title)
 
-        onCreateRecord(_savedRecordId.value)
+            onCreateRecord(_savedRecordId.value)
+        }
     }
 
     private fun saveRecord(title: String) {

@@ -1,12 +1,15 @@
 package com.rostykstets.fembodydeformer.domain.models
 
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 data class SimulationRecord(
     val id: Int = 0,
-    val title: String,
-    val dateAdded: LocalDateTime,
-    val dateModified: LocalDateTime,
+    val title: String = "",
+    val dateAdded: LocalDateTime = Clock.System.now().toLocalDateTime(timeZone = TimeZone.currentSystemDefault()),
+    val dateModified: LocalDateTime = Clock.System.now().toLocalDateTime(timeZone = TimeZone.currentSystemDefault()),
     val sizeX: Float = 4f,
     val sizeY: Float = 4f,
     val sizeZ: Float = 4f,

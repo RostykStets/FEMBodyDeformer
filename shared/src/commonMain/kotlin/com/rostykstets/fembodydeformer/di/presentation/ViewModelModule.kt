@@ -7,7 +7,7 @@ import org.koin.dsl.module
 
 val viewModelModule = module {
 
-    viewModel { FEMViewModel(get()) }
+    viewModel { FEMViewModel(get(), get()) }
 
     viewModel { RecordsViewModel(get(), get()) }
 }

@@ -5,15 +5,20 @@ import androidx.lifecycle.viewModelScope
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
+import com.rostykstets.fembodydeformer.domain.usecases.GetSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.ui.models.Vector3
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FEMViewModel(val femBody: FEMBody) : ViewModel() {
+class FEMViewModel(
+    val femBody: FEMBody,
+    private val getSimulationRecordUseCase: GetSimulationRecordUseCase
+) : ViewModel() {
 
     private val _bodySize = MutableStateFlow(Vector3(4f, 4f, 4f))
     val bodySize = _bodySize.asStateFlow()
@@ -42,9 +47,42 @@ class FEMViewModel(val femBody: FEMBody) : ViewModel() {
     private val _isMappingData = MutableStateFlow(false)
     val isMappingData: StateFlow<Boolean> = _isMappingData.asStateFlow()
 
-    fun mapDataFromSimulationRecord(simulationRecord: SimulationRecord) {
+    private val _isLoadingData = MutableStateFlow(false)
+    val isLoadingData = _isLoadingData.asStateFlow()
+
+    private val _simulationRecord = MutableStateFlow(SimulationRecord())
+
+    fun handleSimulationRecordId(simulationRecordId: Int) {
+
+        viewModelScope.launch {
+            loadSimulationRecord(simulationRecordId)
+
+            mapDataFromSimulationRecord()
+        }
+    }
+
+
+    private fun loadSimulationRecord(simulationRecordId: Int) {
+
+        _isLoadingData.value = true
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val simulationRecord = getSimulationRecordUseCase(simulationRecordId)
+
+
+            if(simulationRecord != null) {
+                _simulationRecord.value = simulationRecord
+            }
+
+            _isLoadingData.value = false
+        }
+    }
+
+    private fun mapDataFromSimulationRecord() {
 
         _isMappingData.value = true
+
+        val simulationRecord = _simulationRecord.value
 
         val sizes = Vector3(simulationRecord.sizeX, simulationRecord.sizeY, simulationRecord.sizeZ)
 
