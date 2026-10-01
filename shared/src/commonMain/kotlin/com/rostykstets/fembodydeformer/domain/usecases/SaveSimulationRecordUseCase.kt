@@ -5,7 +5,7 @@ import com.rostykstets.fembodydeformer.domain.repositories.SimulationRecordRepos
 
 class SaveSimulationRecordUseCase(private val simulationRecordRepository: SimulationRecordRepository) {
 
-    suspend operator fun invoke(simulationRecord: SimulationRecord) {
-        simulationRecordRepository.saveSimulationRecord(simulationRecord)
+    suspend operator fun invoke(simulationRecord: SimulationRecord): Long {
+        return simulationRecordRepository.saveSimulationRecord(simulationRecord)
     }
 }

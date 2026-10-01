@@ -15,7 +15,7 @@ interface SimulationRecordDao {
     fun getSimulationRecordsOrderedByDateModified(): Flow<List<SimulationRecordEntity>>
 
     @Insert
-    suspend fun saveSimulationRecord(simulationRecordEntity: SimulationRecordEntity)
+    suspend fun saveSimulationRecord(simulationRecordEntity: SimulationRecordEntity): Long
 
     @Query("SELECT * FROM SimulationRecords WHERE id = :id")
     suspend fun getSimulationRecordById(id: Int): SimulationRecordEntity?

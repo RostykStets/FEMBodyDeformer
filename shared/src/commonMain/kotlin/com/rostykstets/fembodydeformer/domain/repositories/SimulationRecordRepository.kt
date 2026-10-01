@@ -9,7 +9,7 @@ interface SimulationRecordRepository {
 
     suspend fun getSimulationRecordById(id: Int): SimulationRecord?
 
-    suspend fun saveSimulationRecord(simulationRecord: SimulationRecord)
+    suspend fun saveSimulationRecord(simulationRecord: SimulationRecord): Long
 
     suspend fun updateSimulationRecord(simulationRecord: SimulationRecord)
 

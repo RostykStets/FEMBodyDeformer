@@ -23,8 +23,8 @@ class SimulationRecordRepositoryImpl(private val simulationRecordDao: Simulation
         return simulationRecordDao.getSimulationRecordById(id)?.toModel()
     }
 
-    override suspend fun saveSimulationRecord(simulationRecord: SimulationRecord) {
-        simulationRecordDao.saveSimulationRecord(simulationRecord.toEntity())
+    override suspend fun saveSimulationRecord(simulationRecord: SimulationRecord): Long {
+        return simulationRecordDao.saveSimulationRecord(simulationRecord.toEntity())
     }
 
     override suspend fun updateSimulationRecord(simulationRecord: SimulationRecord) {
