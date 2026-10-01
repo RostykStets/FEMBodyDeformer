@@ -7,6 +7,8 @@ interface SimulationRecordRepository {
 
     fun getSimulationRecordsOrderedByDateModified(): Flow<List<SimulationRecord>>
 
+    suspend fun getSimulationRecordById(id: Int): SimulationRecord?
+
     suspend fun saveSimulationRecord(simulationRecord: SimulationRecord)
 
     suspend fun updateSimulationRecord(simulationRecord: SimulationRecord)

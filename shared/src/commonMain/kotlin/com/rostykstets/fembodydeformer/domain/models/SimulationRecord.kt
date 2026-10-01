@@ -3,7 +3,7 @@ package com.rostykstets.fembodydeformer.domain.models
 import kotlinx.datetime.LocalDateTime
 
 data class SimulationRecord(
-    val id: Int,
+    val id: Int = 0,
     val title: String,
     val dateAdded: LocalDateTime,
     val dateModified: LocalDateTime,

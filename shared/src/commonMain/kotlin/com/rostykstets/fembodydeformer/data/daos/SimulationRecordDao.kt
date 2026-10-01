@@ -17,6 +17,9 @@ interface SimulationRecordDao {
     @Insert
     suspend fun saveSimulationRecord(simulationRecordEntity: SimulationRecordEntity)
 
+    @Query("SELECT * FROM SimulationRecords WHERE id = :id")
+    suspend fun getSimulationRecordById(id: Int): SimulationRecordEntity?
+
     @Update
     suspend fun updateSimulationRecord(simulationRecordEntity: SimulationRecordEntity)
 

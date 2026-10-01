@@ -8,7 +8,8 @@ import com.rostykstets.fembodydeformer.domain.repositories.SimulationRecordRepos
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class SimulationRecordRepositoryImpl(private val simulationRecordDao: SimulationRecordDao): SimulationRecordRepository {
+class SimulationRecordRepositoryImpl(private val simulationRecordDao: SimulationRecordDao) :
+    SimulationRecordRepository {
 
     override fun getSimulationRecordsOrderedByDateModified(): Flow<List<SimulationRecord>> {
 
@@ -16,6 +17,10 @@ class SimulationRecordRepositoryImpl(private val simulationRecordDao: Simulation
 
         return simulationRecords.map { it.map { entity -> entity.toModel() } }
 
+    }
+
+    override suspend fun getSimulationRecordById(id: Int): SimulationRecord? {
+        return simulationRecordDao.getSimulationRecordById(id)?.toModel()
     }
 
     override suspend fun saveSimulationRecord(simulationRecord: SimulationRecord) {
