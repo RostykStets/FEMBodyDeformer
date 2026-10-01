@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
+import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
 import com.rostykstets.fembodydeformer.ui.models.Vector3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FEMViewModel(val femBody: FEMBody): ViewModel() {
+class FEMViewModel(val femBody: FEMBody) : ViewModel() {
 
     private val _bodySize = MutableStateFlow(Vector3(4f, 4f, 4f))
     val bodySize = _bodySize.asStateFlow()
@@ -38,10 +39,41 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
     private val _showWarningMessage = MutableStateFlow(false)
     val showWarningMessage: StateFlow<Boolean> = _showWarningMessage.asStateFlow()
 
-    init {
-        rebuildMesh()
-    }
+    private val _isMappingData = MutableStateFlow(false)
+    val isMappingData: StateFlow<Boolean> = _isMappingData.asStateFlow()
 
+    fun mapDataFromSimulationRecord(simulationRecord: SimulationRecord) {
+
+        _isMappingData.value = true
+
+        val sizes = Vector3(simulationRecord.sizeX, simulationRecord.sizeY, simulationRecord.sizeZ)
+
+        val splits = Vector3(
+            simulationRecord.splitX.toFloat(),
+            simulationRecord.splitY.toFloat(),
+            simulationRecord.splitZ.toFloat()
+        )
+
+        _bodySize.value = sizes
+        _bodySplits.value = splits
+
+        _youngModule.value = simulationRecord.youngModule.toString()
+        _poissonRatio.value = simulationRecord.poissonRatio.toString()
+        _pressure.value = simulationRecord.pressure.toString()
+
+        rebuildMesh()
+
+        femBody.fixedFaces.addAll(simulationRecord.fixedFaces)
+        femBody.loadedFaces.addAll(simulationRecord.loadedFaces)
+
+        femBody.updateBoundaryArrays(_pressure.value.toDoubleOrNull() ?: 0.0)
+
+        _isMappingData.value = false
+
+        if (simulationRecord.isBodyDeformed) {
+            calculate()
+        }
+    }
 
     fun updateSize(newSize: Vector3) {
         _bodySize.value = newSize
@@ -53,8 +85,14 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
         rebuildMesh()
     }
 
-    fun updateYoungModule(value: String) { _youngModule.value = value }
-    fun updatePoissonRatio(value: String) { _poissonRatio.value = value }
+    fun updateYoungModule(value: String) {
+        _youngModule.value = value
+    }
+
+    fun updatePoissonRatio(value: String) {
+        _poissonRatio.value = value
+    }
+
     fun updatePressure(value: String) {
         _pressure.value = value
 
@@ -88,14 +126,14 @@ class FEMViewModel(val femBody: FEMBody): ViewModel() {
     }
 
     fun calculate() {
-        val e = _youngModule.value.toDoubleOrNull() ?: return
-        val v = _poissonRatio.value.toDoubleOrNull() ?: return
-        val p = _pressure.value.toDoubleOrNull() ?: return
-
         if (femBody.fixedFaces.isEmpty() || femBody.loadedFaces.isEmpty()) {
             _showWarningMessage.value = true
             return
         }
+
+        val e = _youngModule.value.toDoubleOrNull() ?: return
+        val v = _poissonRatio.value.toDoubleOrNull() ?: return
+        val p = _pressure.value.toDoubleOrNull() ?: return
 
         viewModelScope.launch {
             _isCalculating.value = true

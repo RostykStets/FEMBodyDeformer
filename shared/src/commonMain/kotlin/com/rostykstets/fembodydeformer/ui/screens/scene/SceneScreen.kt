@@ -3,6 +3,7 @@ package com.rostykstets.fembodydeformer.ui.screens.scene
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.ProjectedFace
+import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
 import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
 import com.rostykstets.fembodydeformer.ui.screens.utilities.VeryLightGray2
 import com.rostykstets.fembodydeformer.ui.models.SimpleCamera
@@ -44,28 +47,46 @@ import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.scene.viewmodels.FEMViewModel
 import femlab.shared.generated.resources.Res
 import femlab.shared.generated.resources.warning_message
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.exp
+import kotlin.time.Clock
 
 @Composable
 fun SceneScreen() {
 
-    val viewModel: FEMViewModel = koinViewModel()
+    val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
-    val bodySize by viewModel.bodySize.collectAsState()
-    val bodySplits by viewModel.bodySplits.collectAsState()
+    val testSimulationRecord = SimulationRecord(
+        id = 0,
+        title = "",
+        dateAdded = now,
+        dateModified = now
+    )
 
-    val youngModule by viewModel.youngModule.collectAsState()
-    val poissonRatio by viewModel.poissonRatio.collectAsState()
-    val pressure by viewModel.pressure.collectAsState()
+    val femViewModel: FEMViewModel = koinViewModel()
 
-    val deformedBody by viewModel.deformedBody.collectAsState()
-    val isCalculating by viewModel.isCalculating.collectAsState()
+    LaunchedEffect(testSimulationRecord.id) {
+        femViewModel.mapDataFromSimulationRecord(testSimulationRecord)
+    }
 
-    val showWarningMessage by viewModel.showWarningMessage.collectAsState()
+    val bodySize by femViewModel.bodySize.collectAsState()
+    val bodySplits by femViewModel.bodySplits.collectAsState()
 
-   SceneContent(
+    val youngModule by femViewModel.youngModule.collectAsState()
+    val poissonRatio by femViewModel.poissonRatio.collectAsState()
+    val pressure by femViewModel.pressure.collectAsState()
+
+    val deformedBody by femViewModel.deformedBody.collectAsState()
+    val isCalculating by femViewModel.isCalculating.collectAsState()
+
+    val showWarningMessage by femViewModel.showWarningMessage.collectAsState()
+
+    val isMappingData by femViewModel.isMappingData.collectAsState()
+
+    SceneContent(
         bodySize = bodySize,
         bodySplits = bodySplits,
         youngModule = youngModule,
@@ -73,17 +94,18 @@ fun SceneScreen() {
         pressure = pressure,
         deformedBody = deformedBody,
         isCalculating = isCalculating,
-        femBody = viewModel.femBody,
+        femBody = femViewModel.femBody,
         showWarningMessage = showWarningMessage,
-        updateSize = viewModel::updateSize,
-        updateSplits = viewModel::updateSplits,
-        updateYoungModule = viewModel::updateYoungModule,
-        updatePoissonRatio = viewModel::updatePoissonRatio,
-        updatePressure = viewModel::updatePressure,
-        calculate = viewModel::calculate,
-        toggleFaceFixed = viewModel::toggleFaceFixed,
-        toggleFaceLoaded = viewModel::toggleFaceLoaded,
-        hideWarningMessage = viewModel::hideWarningMessage
+        isMappingData = isMappingData,
+        updateSize = femViewModel::updateSize,
+        updateSplits = femViewModel::updateSplits,
+        updateYoungModule = femViewModel::updateYoungModule,
+        updatePoissonRatio = femViewModel::updatePoissonRatio,
+        updatePressure = femViewModel::updatePressure,
+        calculate = femViewModel::calculate,
+        toggleFaceFixed = femViewModel::toggleFaceFixed,
+        toggleFaceLoaded = femViewModel::toggleFaceLoaded,
+        hideWarningMessage = femViewModel::hideWarningMessage
     )
 }
 
@@ -94,6 +116,7 @@ private fun SceneContent(
     deformedBody: DoubleArray?, isCalculating: Boolean,
     femBody: FEMBody,
     showWarningMessage: Boolean,
+    isMappingData: Boolean,
     updateSize: (Vector3) -> Unit,
     updateSplits: (Vector3) -> Unit,
     updateYoungModule: (String) -> Unit,
@@ -174,7 +197,7 @@ private fun SceneContent(
             calculate = calculate
         )
 
-        if (isCalculating) CalculatingIndicator(
+        if (isCalculating || isMappingData) CalculatingIndicator(
             modifier = Modifier.matchParentSize()
         )
 
@@ -309,9 +332,17 @@ private fun CalculatingIndicator(modifier: Modifier) {
 
 @Composable
 private fun WarningMessage(hideWarningMessage: () -> Unit) {
+
+    val interactionSource = remember { MutableInteractionSource() }
+
     Box(
         modifier = Modifier.fillMaxSize().background(color = Color.Gray.copy(alpha = 0.5f))
-            .clickable(enabled = true, onClick = hideWarningMessage),
+            .clickable(
+                enabled = true,
+                indication = null,
+                interactionSource = interactionSource,
+                onClick = hideWarningMessage
+            ),
         contentAlignment = Alignment.Center
     ) {
         Box(
@@ -378,6 +409,7 @@ private fun SceneDesktopPreview() {
         isCalculating = false,
         femBody = FEMBody(),
         showWarningMessage = false,
+        isMappingData = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},
@@ -406,6 +438,7 @@ private fun SceneMobilePreview() {
         isCalculating = false,
         femBody = FEMBody(),
         showWarningMessage = false,
+        isMappingData = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},
