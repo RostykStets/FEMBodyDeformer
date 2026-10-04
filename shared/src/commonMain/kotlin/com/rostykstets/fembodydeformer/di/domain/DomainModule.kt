@@ -6,6 +6,7 @@ import com.rostykstets.fembodydeformer.domain.repositories.SimulationRecordRepos
 import com.rostykstets.fembodydeformer.domain.usecases.GetSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.GetSimulationRecordsUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.SaveSimulationRecordUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.UpdateSimulationRecordUseCase
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -19,4 +20,6 @@ val domainModule = module {
     single { SaveSimulationRecordUseCase(get()) }
 
     single { GetSimulationRecordUseCase(get()) }
+
+    single { UpdateSimulationRecordUseCase(get()) }
 }
