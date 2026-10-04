@@ -118,15 +118,6 @@ private fun SceneContent(
     toggleFaceLoaded: (ElementFace) -> Unit,
     hideWarningMessage: () -> Unit
 ) {
-
-    var sizeX by remember(bodySize.x) { mutableStateOf(bodySize.x.toString()) }
-    var sizeY by remember(bodySize.y) { mutableStateOf(bodySize.y.toString()) }
-    var sizeZ by remember(bodySize.z) { mutableStateOf(bodySize.z.toString()) }
-
-    var splitX by remember(bodySplits.x) { mutableStateOf(bodySplits.x.toInt().toString()) }
-    var splitY by remember(bodySplits.y) { mutableStateOf(bodySplits.y.toInt().toString()) }
-    var splitZ by remember(bodySplits.z) { mutableStateOf(bodySplits.z.toInt().toString()) }
-
     val camera = remember { SimpleCamera() }
 
     var showIndexes by remember { mutableStateOf(false) }
@@ -168,12 +159,6 @@ private fun SceneContent(
             modifier = Modifier
                 .align(alignment = Alignment.TopStart)
                 .clickable(enabled = false, onClick = {}),
-            sizeX = sizeX,
-            sizeY = sizeY,
-            sizeZ = sizeZ,
-            splitX = splitX,
-            splitY = splitY,
-            splitZ = splitZ,
             bodySize = bodySize,
             bodySplits = bodySplits,
             youngModule = youngModule,

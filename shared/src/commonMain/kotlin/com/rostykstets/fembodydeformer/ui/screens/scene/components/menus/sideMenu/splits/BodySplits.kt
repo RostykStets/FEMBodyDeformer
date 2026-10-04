@@ -17,14 +17,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BodySplits(
-    splitX: String,
-    splitY: String,
-    splitZ: String,
     labelFontSize: TextUnit,
     bodySplits: Vector3,
     isCalculating: Boolean,
     updateSplits: (Vector3) -> Unit
 ) {
+
+    val (splitX, splitY, splitZ) = bodySplits
 
     CustomText(
         modifier = Modifier.padding(bottom = 2.dp),
@@ -33,7 +32,7 @@ fun BodySplits(
     )
 
     BodySplit(
-        split = splitX,
+        split = splitX.toString(),
         splitLabel = stringResource(Res.string.split_x),
         isCalculating = isCalculating,
         updateSplit = {
@@ -41,7 +40,7 @@ fun BodySplits(
         })
 
     BodySplit(
-        split = splitY,
+        split = splitY.toString(),
         splitLabel = stringResource(Res.string.split_y),
         isCalculating = isCalculating,
         updateSplit = {
@@ -49,7 +48,7 @@ fun BodySplits(
         })
 
     BodySplit(
-        split = splitZ,
+        split = splitZ.toString(),
         splitLabel = stringResource(Res.string.split_z),
         isCalculating = isCalculating,
         updateSplit = {

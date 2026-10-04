@@ -42,12 +42,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SideMenu(
     modifier: Modifier = Modifier,
-    sizeX: String,
-    sizeY: String,
-    sizeZ: String,
-    splitX: String,
-    splitY: String,
-    splitZ: String,
     youngModule: String,
     poissonRatio: String,
     pressure: String,
@@ -77,12 +71,6 @@ fun SideMenu(
 
         AnimatedVisibility(visible = showControlPanel) {
             ControlPanel(
-                sizeX = sizeX,
-                sizeY = sizeY,
-                sizeZ = sizeZ,
-                splitX = splitX,
-                splitY = splitY,
-                splitZ = splitZ,
                 bodySize = bodySize,
                 bodySplits = bodySplits,
                 youngModule = youngModule,
@@ -126,12 +114,6 @@ fun SideMenu(
 
 @Composable
 private fun ControlPanel(
-    sizeX: String,
-    sizeY: String,
-    sizeZ: String,
-    splitX: String,
-    splitY: String,
-    splitZ: String,
     youngModule: String,
     poissonRatio: String,
     pressure: String,
@@ -160,9 +142,6 @@ private fun ControlPanel(
     ) {
 
         BodySizes(
-            sizeX = sizeX,
-            sizeY = sizeY,
-            sizeZ = sizeZ,
             bodySize = bodySize,
             labelFontSize = labelFontSize,
             isCalculating = isCalculating,
@@ -172,9 +151,6 @@ private fun ControlPanel(
         Spacer(modifier = Modifier.height(8.dp))
 
         BodySplits(
-            splitX = splitX,
-            splitY = splitY,
-            splitZ = splitZ,
             labelFontSize = labelFontSize,
             bodySplits = bodySplits,
             isCalculating = isCalculating,

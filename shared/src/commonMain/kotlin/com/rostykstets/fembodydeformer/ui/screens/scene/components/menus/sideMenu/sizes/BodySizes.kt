@@ -17,14 +17,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BodySizes(
-    sizeX: String,
-    sizeY: String,
-    sizeZ: String,
     bodySize: Vector3,
     labelFontSize: TextUnit,
     isCalculating: Boolean,
     updateSize: (Vector3) -> Unit
 ) {
+
+    val (sizeX, sizeY, sizeZ) = bodySize
 
     CustomText(
         modifier = Modifier.padding(bottom = 2.dp),
@@ -33,21 +32,21 @@ fun BodySizes(
     )
 
     BodySize(
-        size = sizeX,
+        size = sizeX.toString(),
         sizeLabel = stringResource(Res.string.size_x),
         isCalculating = isCalculating,
         updateSize = { updateSize(bodySize.copy(x = it)) }
     )
 
     BodySize(
-        size = sizeY,
+        size = sizeY.toString(),
         sizeLabel = stringResource(Res.string.size_y),
         isCalculating = isCalculating,
         updateSize = { updateSize(bodySize.copy(y = it)) }
     )
 
     BodySize(
-        size = sizeZ,
+        size = sizeZ.toString(),
         sizeLabel = stringResource(Res.string.size_z),
         isCalculating = isCalculating,
         updateSize = { updateSize(bodySize.copy(z = it)) }
