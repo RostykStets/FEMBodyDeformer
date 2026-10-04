@@ -34,4 +34,6 @@
     <string name="create">Створити</string>
     <string name="records">Записи</string>
     <string name="no_records">Нема записів</string>
+    <string name="save">Зберегти</string>
+    <string name="open_project">Відкрити</string>
 </resources>
