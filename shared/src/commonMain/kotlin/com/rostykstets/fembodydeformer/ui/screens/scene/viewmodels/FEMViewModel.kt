@@ -6,6 +6,7 @@ import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
 import com.rostykstets.fembodydeformer.domain.usecases.GetSimulationRecordUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.UpdateSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.ui.models.Vector3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -17,7 +18,8 @@ import kotlinx.coroutines.withContext
 
 class FEMViewModel(
     val femBody: FEMBody,
-    private val getSimulationRecordUseCase: GetSimulationRecordUseCase
+    private val getSimulationRecordUseCase: GetSimulationRecordUseCase,
+    private val updateSimulationRecordUseCase: UpdateSimulationRecordUseCase
 ) : ViewModel() {
 
     private val _bodySize = MutableStateFlow(Vector3(4f, 4f, 4f))
@@ -51,6 +53,10 @@ class FEMViewModel(
     val isLoadingData = _isLoadingData.asStateFlow()
 
     private val _simulationRecord = MutableStateFlow(SimulationRecord())
+    val simulationRecord = _simulationRecord.asStateFlow()
+
+    private val _isSavingData = MutableStateFlow(false)
+    val isSavingData = _isSavingData.asStateFlow()
 
     fun handleSimulationRecordId(simulationRecordId: Int) {
 
@@ -61,54 +67,84 @@ class FEMViewModel(
         }
     }
 
+    fun saveSimulationRecord() {
 
-    private fun loadSimulationRecord(simulationRecordId: Int) {
+        if (_isCalculating.value) return
 
+        _isSavingData.value = true
+
+        val (sizeX, sizeY, sizeZ) = _bodySize.value
+
+        val (splitX, splitY, splitZ) = _bodySplits.value
+
+        _simulationRecord.value = _simulationRecord.value.copy(
+            sizeX = sizeX,
+            sizeY = sizeY,
+            sizeZ = sizeZ,
+            splitX = splitX.toInt(),
+            splitY = splitY.toInt(),
+            splitZ = splitZ.toInt(),
+            youngModule = _youngModule.value.toDouble(),
+            poissonRatio = _poissonRatio.value.toDouble(),
+            pressure = _pressure.value.toDouble(),
+            fixedFaces = femBody.fixedFaces,
+            loadedFaces = femBody.loadedFaces,
+            isBodyDeformed = _deformedBody.value != null
+        )
+
+        viewModelScope.launch {
+            updateSimulationRecordUseCase(_simulationRecord.value)
+
+            _isSavingData.value = false
+        }
+    }
+
+
+    private suspend fun loadSimulationRecord(simulationRecordId: Int) {
         _isLoadingData.value = true
 
-        viewModelScope.launch(Dispatchers.IO) {
-            val simulationRecord = getSimulationRecordUseCase(simulationRecordId)
-
-
-            if(simulationRecord != null) {
-                _simulationRecord.value = simulationRecord
-            }
-
-            _isLoadingData.value = false
+        val record = withContext(Dispatchers.IO) {
+            getSimulationRecordUseCase(simulationRecordId)
         }
+
+        if (record != null) {
+            _simulationRecord.value = record
+        }
+
+        _isLoadingData.value = false
     }
 
     private fun mapDataFromSimulationRecord() {
 
         _isMappingData.value = true
 
-        val simulationRecord = _simulationRecord.value
+        val record = _simulationRecord.value
 
-        val sizes = Vector3(simulationRecord.sizeX, simulationRecord.sizeY, simulationRecord.sizeZ)
+        val sizes = Vector3(record.sizeX, record.sizeY, record.sizeZ)
 
         val splits = Vector3(
-            simulationRecord.splitX.toFloat(),
-            simulationRecord.splitY.toFloat(),
-            simulationRecord.splitZ.toFloat()
+            record.splitX.toFloat(),
+            record.splitY.toFloat(),
+            record.splitZ.toFloat()
         )
 
         _bodySize.value = sizes
         _bodySplits.value = splits
 
-        _youngModule.value = simulationRecord.youngModule.toString()
-        _poissonRatio.value = simulationRecord.poissonRatio.toString()
-        _pressure.value = simulationRecord.pressure.toString()
+        _youngModule.value = record.youngModule.toString()
+        _poissonRatio.value = record.poissonRatio.toString()
+        _pressure.value = record.pressure.toString()
 
         rebuildMesh()
 
-        femBody.fixedFaces.addAll(simulationRecord.fixedFaces)
-        femBody.loadedFaces.addAll(simulationRecord.loadedFaces)
+        femBody.fixedFaces.addAll(record.fixedFaces)
+        femBody.loadedFaces.addAll(record.loadedFaces)
 
         femBody.updateBoundaryArrays(_pressure.value.toDoubleOrNull() ?: 0.0)
 
         _isMappingData.value = false
 
-        if (simulationRecord.isBodyDeformed) {
+        if (record.isBodyDeformed) {
             calculate()
         }
     }

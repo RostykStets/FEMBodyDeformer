@@ -36,8 +36,11 @@ import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
 import com.rostykstets.fembodydeformer.ui.screens.utilities.VeryLightGray2
 import com.rostykstets.fembodydeformer.ui.models.SimpleCamera
 import com.rostykstets.fembodydeformer.ui.models.Vector3
+import com.rostykstets.fembodydeformer.ui.navigation.localNavController
+import com.rostykstets.fembodydeformer.ui.routing.RecordsScreen
 import com.rostykstets.fembodydeformer.ui.screens.scene.components.body.RenderBody
 import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.infoMenu.InfoMenu
+import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.projectMenu.ProjectMenu
 import com.rostykstets.fembodydeformer.ui.screens.scene.components.menus.sideMenu.SideMenu
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_DESKTOP
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_MOBILE
@@ -52,6 +55,8 @@ import kotlin.math.exp
 
 @Composable
 fun SceneScreen(simulationRecordId: Int) {
+
+    val navController = localNavController.current
 
     val femViewModel: FEMViewModel = koinViewModel()
 
@@ -75,6 +80,10 @@ fun SceneScreen(simulationRecordId: Int) {
 
     val isLoadingData by femViewModel.isLoadingData.collectAsState()
 
+    val isSavingData by femViewModel.isSavingData.collectAsState()
+
+    val simulationRecord by femViewModel.simulationRecord.collectAsState()
+
     SceneContent(
         bodySize = bodySize,
         bodySplits = bodySplits,
@@ -84,9 +93,11 @@ fun SceneScreen(simulationRecordId: Int) {
         deformedBody = deformedBody,
         isCalculating = isCalculating,
         femBody = femViewModel.femBody,
+        projectTitle = simulationRecord.title,
         showWarningMessage = showWarningMessage,
         isMappingData = isMappingData,
         isLoadingData = isLoadingData,
+        isSavingData = isSavingData,
         updateSize = femViewModel::updateSize,
         updateSplits = femViewModel::updateSplits,
         updateYoungModule = femViewModel::updateYoungModule,
@@ -95,7 +106,9 @@ fun SceneScreen(simulationRecordId: Int) {
         calculate = femViewModel::calculate,
         toggleFaceFixed = femViewModel::toggleFaceFixed,
         toggleFaceLoaded = femViewModel::toggleFaceLoaded,
-        hideWarningMessage = femViewModel::hideWarningMessage
+        hideWarningMessage = femViewModel::hideWarningMessage,
+        onSave = femViewModel::saveSimulationRecord,
+        onOpenProject = { navController.navigate(route = RecordsScreen) }
     )
 }
 
@@ -105,9 +118,11 @@ private fun SceneContent(
     poissonRatio: String, pressure: String,
     deformedBody: DoubleArray?, isCalculating: Boolean,
     femBody: FEMBody,
+    projectTitle: String,
     showWarningMessage: Boolean,
     isMappingData: Boolean,
     isLoadingData: Boolean,
+    isSavingData: Boolean,
     updateSize: (Vector3) -> Unit,
     updateSplits: (Vector3) -> Unit,
     updateYoungModule: (String) -> Unit,
@@ -116,7 +131,9 @@ private fun SceneContent(
     calculate: () -> Unit,
     toggleFaceFixed: (ElementFace) -> Unit,
     toggleFaceLoaded: (ElementFace) -> Unit,
-    hideWarningMessage: () -> Unit
+    hideWarningMessage: () -> Unit,
+    onSave: () -> Unit,
+    onOpenProject: () -> Unit
 ) {
     val camera = remember { SimpleCamera() }
 
@@ -173,16 +190,25 @@ private fun SceneContent(
             calculate = calculate
         )
 
-        if (isCalculating || isMappingData || isLoadingData) CalculatingIndicator(
-            modifier = Modifier.matchParentSize()
-        )
-
         InfoMenu(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .clickable(enabled = false, onClick = {}),
             showIndexes = showIndexes,
             toggleIndexesCheckbox = { showIndexes = it })
+
+        ProjectMenu(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .clickable(enabled = false, onClick = {}),
+            projectTitle = projectTitle,
+            onSave = onSave,
+            onOpenProject = onOpenProject
+        )
+
+        if (isCalculating || isMappingData || isLoadingData || isSavingData) CalculatingIndicator(
+            modifier = Modifier.matchParentSize()
+        )
 
         if (showWarningMessage) {
             WarningMessage(
@@ -342,14 +368,14 @@ private fun findClickedFace(click: Offset, projectedFaces: List<ProjectedFace>):
 
     val sortedFaces = projectedFaces.sortedByDescending { it.averageDepth }
 
-    for (projected in sortedFaces) {
-        if (projected.vertices.size < 4) continue
+    for ((face, vertices) in sortedFaces) {
+        if (vertices.size < 4) continue
         if (isPointInPolygon(
                 click,
-                projected.vertices
+                vertices
             )
         ) {
-            return projected.face
+            return face
         }
     }
     return null
@@ -384,9 +410,11 @@ private fun SceneDesktopPreview() {
         deformedBody = null,
         isCalculating = false,
         femBody = FEMBody(),
+        projectTitle = "Test",
         showWarningMessage = false,
         isMappingData = false,
         isLoadingData = false,
+        isSavingData = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},
@@ -395,7 +423,9 @@ private fun SceneDesktopPreview() {
         calculate = {},
         toggleFaceFixed = {},
         toggleFaceLoaded = {},
-        hideWarningMessage = {}
+        hideWarningMessage = {},
+        onSave = {},
+        onOpenProject = {}
     )
 }
 
@@ -414,9 +444,11 @@ private fun SceneMobilePreview() {
         deformedBody = null,
         isCalculating = false,
         femBody = FEMBody(),
+        projectTitle = "Test",
         showWarningMessage = false,
         isMappingData = false,
         isLoadingData = false,
+        isSavingData = false,
         updateSize = {},
         updateSplits = {},
         updateYoungModule = {},
@@ -425,6 +457,8 @@ private fun SceneMobilePreview() {
         calculate = {},
         toggleFaceFixed = {},
         toggleFaceLoaded = {},
-        hideWarningMessage = {}
+        hideWarningMessage = {},
+        onSave = {},
+        onOpenProject = {}
     )
 }
