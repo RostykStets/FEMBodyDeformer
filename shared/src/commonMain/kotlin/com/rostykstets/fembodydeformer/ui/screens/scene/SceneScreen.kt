@@ -322,7 +322,8 @@ fun Modifier.cameraMouseScroll(
 private fun CalculatingIndicator(modifier: Modifier) {
     Box(
         modifier = modifier
-            .background(color = Color.Gray.copy(alpha = 0.5f)),
+            .background(color = Color.Gray.copy(alpha = 0.5f))
+            .clickable(enabled = false, onClick = {}),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator(

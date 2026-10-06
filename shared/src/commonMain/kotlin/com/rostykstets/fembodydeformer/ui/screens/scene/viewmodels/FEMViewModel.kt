@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 class FEMViewModel(
     val femBody: FEMBody,
@@ -64,18 +67,20 @@ class FEMViewModel(
             loadSimulationRecord(simulationRecordId)
 
             mapDataFromSimulationRecord()
+
+            saveSimulationRecord()
         }
     }
 
     fun saveSimulationRecord() {
-
-        if (_isCalculating.value) return
 
         _isSavingData.value = true
 
         val (sizeX, sizeY, sizeZ) = _bodySize.value
 
         val (splitX, splitY, splitZ) = _bodySplits.value
+
+        val now = Clock.System.now().toLocalDateTime(timeZone = TimeZone.currentSystemDefault())
 
         _simulationRecord.value = _simulationRecord.value.copy(
             sizeX = sizeX,
@@ -87,8 +92,9 @@ class FEMViewModel(
             youngModule = _youngModule.value.toDouble(),
             poissonRatio = _poissonRatio.value.toDouble(),
             pressure = _pressure.value.toDouble(),
-            fixedFaces = femBody.fixedFaces,
-            loadedFaces = femBody.loadedFaces,
+            fixedFaces = femBody.fixedFaces.toList(),
+            loadedFaces = femBody.loadedFaces.toList(),
+            dateModified = now,
             isBodyDeformed = _deformedBody.value != null
         )
 

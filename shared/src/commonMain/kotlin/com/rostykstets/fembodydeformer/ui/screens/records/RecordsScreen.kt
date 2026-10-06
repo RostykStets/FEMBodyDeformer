@@ -83,7 +83,9 @@ fun RecordsScreen() {
         isLoading = isLoading,
         openRecord = { id -> navigateToScene(id) },
         addRecord = { showDialog = true },
-        onBack = {})
+        onBack = {
+            navController.popBackStack()
+        })
 
     AnimatedVisibility(
         visible = showDialog,
