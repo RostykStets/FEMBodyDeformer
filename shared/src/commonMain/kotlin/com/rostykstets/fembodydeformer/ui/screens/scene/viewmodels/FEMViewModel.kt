@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
-import com.rostykstets.fembodydeformer.domain.usecases.GetSimulationRecordUseCase
-import com.rostykstets.fembodydeformer.domain.usecases.UpdateSimulationRecordUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.records.GetSimulationRecordUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.records.UpdateSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.ui.models.Vector3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

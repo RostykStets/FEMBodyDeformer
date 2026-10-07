@@ -1,4 +1,4 @@
-package com.rostykstets.fembodydeformer.domain.usecases
+package com.rostykstets.fembodydeformer.domain.usecases.records
 
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
 import com.rostykstets.fembodydeformer.domain.repositories.SimulationRecordRepository

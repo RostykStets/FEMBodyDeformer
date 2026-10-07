@@ -5,6 +5,9 @@ import com.rostykstets.fembodydeformer.data.repositories.SimulationRecordReposit
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.repositories.PreferencesRepository
 import com.rostykstets.fembodydeformer.domain.repositories.SimulationRecordRepository
+import com.rostykstets.fembodydeformer.domain.usecases.preferences.ClearPreferenceUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.preferences.GetPreferenceUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.preferences.SavePreferenceUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.records.GetSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.records.GetSimulationRecordsUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.records.SaveSimulationRecordUseCase
@@ -26,4 +29,10 @@ val domainModule = module {
     single { GetSimulationRecordUseCase(get()) }
 
     single { UpdateSimulationRecordUseCase(get()) }
+
+    single { GetPreferenceUseCase(get()) }
+
+    single { SavePreferenceUseCase(get()) }
+
+    single { ClearPreferenceUseCase(get()) }
 }

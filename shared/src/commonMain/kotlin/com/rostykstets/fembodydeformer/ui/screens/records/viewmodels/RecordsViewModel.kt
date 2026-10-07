@@ -3,8 +3,8 @@ package com.rostykstets.fembodydeformer.ui.screens.records.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
-import com.rostykstets.fembodydeformer.domain.usecases.GetSimulationRecordsUseCase
-import com.rostykstets.fembodydeformer.domain.usecases.SaveSimulationRecordUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.records.GetSimulationRecordsUseCase
+import com.rostykstets.fembodydeformer.domain.usecases.records.SaveSimulationRecordUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
