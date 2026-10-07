@@ -83,6 +83,9 @@ kotlin {
             // Material Icon Extended dependency
             implementation(libs.compose.materialIconsCore)
             implementation(libs.compose.materialIconsExtended)
+
+            // DataStore dependency
+            implementation(libs.androidx.datastore.preferences.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -1,0 +1,14 @@
+package com.rostykstets.fembodydeformer.data.sharedPreferences
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import okio.Path.Companion.toPath
+
+fun createDataStore(producePath: () -> String): DataStore<Preferences> {
+    return PreferenceDataStoreFactory.createWithPath(
+        produceFile = { producePath().toPath() }
+    )
+}
+
+const val DATA_STORE_FILE_NAME = "fem_body_deformer.preferencrs_pb"

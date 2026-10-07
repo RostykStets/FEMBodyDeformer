@@ -1,6 +1,7 @@
 package com.rostykstets.fembodydeformer.di
 
 import com.rostykstets.fembodydeformer.di.data.daoModule
+import com.rostykstets.fembodydeformer.di.data.preferencesModule
 import com.rostykstets.fembodydeformer.di.domain.domainModule
 import com.rostykstets.fembodydeformer.di.presentation.viewModelModule
 import org.koin.core.context.startKoin
@@ -12,6 +13,6 @@ expect val platformModule: Module
 fun initKoin(config: KoinAppDeclaration? = null) {
     startKoin {
         config?.invoke(this)
-        modules(daoModule, domainModule, viewModelModule, platformModule)
+        modules(daoModule, preferencesModule, domainModule, viewModelModule, platformModule)
     }
 }
