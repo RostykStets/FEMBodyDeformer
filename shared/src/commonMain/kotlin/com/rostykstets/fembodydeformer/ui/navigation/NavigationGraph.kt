@@ -10,8 +10,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.rostykstets.fembodydeformer.ui.routing.RecordsScreen
 import com.rostykstets.fembodydeformer.ui.routing.SceneScreen
+import com.rostykstets.fembodydeformer.ui.routing.SplashScreen
 import com.rostykstets.fembodydeformer.ui.screens.records.RecordsScreen
 import com.rostykstets.fembodydeformer.ui.screens.scene.SceneScreen
+import com.rostykstets.fembodydeformer.ui.screens.splash.SplashScreen
 
 @Composable
 fun NavigationGraph() {
@@ -23,7 +25,7 @@ fun NavigationGraph() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = RecordsScreen,
+            startDestination = SplashScreen,
             enterTransition = { EnterTransition.None },
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
@@ -36,6 +38,10 @@ fun NavigationGraph() {
 
             composable<RecordsScreen> {
                 RecordsScreen()
+            }
+
+            composable<SplashScreen> {
+               SplashScreen()
             }
         }
     }

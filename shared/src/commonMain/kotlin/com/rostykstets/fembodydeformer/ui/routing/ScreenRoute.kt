@@ -7,3 +7,6 @@ data class SceneScreen(val id: Int)
 
 @Serializable
 object RecordsScreen
+
+@Serializable
+object SplashScreen

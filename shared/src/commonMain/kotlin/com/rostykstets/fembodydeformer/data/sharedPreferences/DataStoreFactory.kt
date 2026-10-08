@@ -11,4 +11,4 @@ fun createDataStore(producePath: () -> String): DataStore<Preferences> {
     )
 }
 
-const val DATA_STORE_FILE_NAME = "fem_body_deformer.preferencrs_pb"
+const val DATA_STORE_FILE_NAME = "fem_body_deformer.preferences_pb"

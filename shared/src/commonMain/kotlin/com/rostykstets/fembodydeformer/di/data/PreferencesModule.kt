@@ -4,5 +4,5 @@ import com.rostykstets.fembodydeformer.data.sharedPreferences.SimulationRecordPr
 import org.koin.dsl.module
 
 val preferencesModule = module {
-    single<SimulationRecordPreferences> { get() }
+    single<SimulationRecordPreferences> { SimulationRecordPreferences(get()) }
 }
