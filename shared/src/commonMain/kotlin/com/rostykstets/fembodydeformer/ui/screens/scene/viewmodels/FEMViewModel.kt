@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.rostykstets.fembodydeformer.domain.models.ElementFace
 import com.rostykstets.fembodydeformer.domain.models.FEMBody
 import com.rostykstets.fembodydeformer.domain.models.SimulationRecord
+import com.rostykstets.fembodydeformer.domain.usecases.preferences.SavePreferenceUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.records.GetSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.domain.usecases.records.UpdateSimulationRecordUseCase
 import com.rostykstets.fembodydeformer.ui.models.Vector3
@@ -22,7 +23,8 @@ import kotlin.time.Clock
 class FEMViewModel(
     val femBody: FEMBody,
     private val getSimulationRecordUseCase: GetSimulationRecordUseCase,
-    private val updateSimulationRecordUseCase: UpdateSimulationRecordUseCase
+    private val updateSimulationRecordUseCase: UpdateSimulationRecordUseCase,
+    private val savePreferenceUseCase: SavePreferenceUseCase
 ) : ViewModel() {
 
     private val _bodySize = MutableStateFlow(Vector3(4f, 4f, 4f))
@@ -101,10 +103,11 @@ class FEMViewModel(
         viewModelScope.launch {
             updateSimulationRecordUseCase(_simulationRecord.value)
 
+            savePreferenceUseCase(_simulationRecord.value.id)
+
             _isSavingData.value = false
         }
     }
-
 
     private suspend fun loadSimulationRecord(simulationRecordId: Int) {
         _isLoadingData.value = true
