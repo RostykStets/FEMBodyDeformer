@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,10 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomButton
 import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
-import com.rostykstets.fembodydeformer.ui.screens.utilities.DarkRed
 import femlab.shared.generated.resources.Res
-import femlab.shared.generated.resources.open_project
+import femlab.shared.generated.resources.open
 import femlab.shared.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 
@@ -90,13 +89,15 @@ fun ProjectMenu(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    MenuButton(
-                        buttonText = stringResource(Res.string.save),
+                    CustomButton(
+                        text = stringResource(Res.string.save),
+                        width = 100.dp,
                         onClick = onSave
                     )
 
-                    MenuButton(
-                        buttonText = stringResource(Res.string.open_project),
+                    CustomButton(
+                        text = stringResource(Res.string.open),
+                        width = 100.dp,
                         onClick = onOpenProject
                     )
                 }
@@ -124,29 +125,5 @@ fun ProjectMenu(
                 modifier = Modifier.matchParentSize()
             )
         }
-    }
-}
-
-@Composable
-private fun MenuButton(buttonText: String, onClick: () -> Unit) {
-
-    val shape = RoundedCornerShape(16.dp)
-
-    val width = 100.dp
-    val height = 40.dp
-
-    Box(
-        modifier = Modifier
-            .size(width = width, height = height)
-            .background(color = DarkRed, shape = shape)
-            .clickable(
-                enabled = true,
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        CustomText(text = buttonText, color = Color.White)
     }
 }

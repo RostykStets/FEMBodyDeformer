@@ -19,6 +19,7 @@ fun CustomButton(
     text: String,
     width: Dp = 150.dp,
     height: Dp = 40.dp,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
 
@@ -33,6 +34,7 @@ fun CustomButton(
             disabledContentColor = DarkRed,
             disabledContainerColor = DarkRed
         ),
+        enabled = enabled,
         shape = shape,
         modifier = Modifier.width(width).height(height),
         contentPadding = PaddingValues(0.dp)

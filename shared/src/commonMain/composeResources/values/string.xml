@@ -35,8 +35,8 @@
     <string name="records">Записи</string>
     <string name="no_records">Нема записів</string>
     <string name="save">Зберегти</string>
-    <string name="open_project">Відкрити</string>
+    <string name="open_project">Відкрити проєкт</string>
     <string name="save_changes">Зберегти зміни</string>
-    <string name="open">Відкрити проєкт</string>
+    <string name="open">Відкрити</string>
     <string name="unsaved_changes_message">Ви маєте незбережені зміни. Ви справді хочете відкрити інший проєкт?</string>
 </resources>

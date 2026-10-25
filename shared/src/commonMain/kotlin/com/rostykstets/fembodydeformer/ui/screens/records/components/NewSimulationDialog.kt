@@ -3,7 +3,6 @@ package com.rostykstets.fembodydeformer.ui.screens.records.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,8 +29,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomButton
 import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomText
-import com.rostykstets.fembodydeformer.ui.screens.utilities.DarkRed
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_DESKTOP
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_DESKTOP
@@ -112,15 +111,19 @@ fun NewSimulationRecordDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
-                DialogButton(
+                CustomButton(
                     text = stringResource(Res.string.cancel),
-                    isClickable = !isSavingRecord,
+                    enabled = !isSavingRecord,
+                    width = 100.dp,
+                    height = 50.dp,
                     onClick = onDismiss
                 )
 
-                DialogButton(
+                CustomButton(
                     text = stringResource(Res.string.create),
-                    isClickable = !isSavingRecord,
+                    enabled = !isSavingRecord,
+                    width = 100.dp,
+                    height = 50.dp,
                     onClick = { onCreateRecord(newProjectTitle) }
                 )
             }
@@ -141,33 +144,6 @@ fun NewSimulationRecordDialog(
                 CircularProgressIndicator(modifier = Modifier.size(40.dp), color = Color.Magenta)
             }
         }
-    }
-}
-
-@Composable
-private fun DialogButton(
-    text: String,
-    isClickable: Boolean,
-    onClick: () -> Unit
-) {
-
-    val shape = RoundedCornerShape(16.dp)
-
-    val interactionSource = remember { MutableInteractionSource() }
-
-    Box(
-        modifier = Modifier
-            .size(width = 100.dp, height = 50.dp)
-            .background(color = DarkRed, shape = shape)
-            .clickable(
-                enabled = isClickable,
-                indication = null,
-                interactionSource = interactionSource,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        CustomText(text = text, color = Color.White)
     }
 }
 

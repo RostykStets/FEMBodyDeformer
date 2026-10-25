@@ -57,7 +57,7 @@ import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.scene.viewmodels.FEMViewModel
 import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomButton
 import femlab.shared.generated.resources.Res
-import femlab.shared.generated.resources.open
+import femlab.shared.generated.resources.open_project
 import femlab.shared.generated.resources.save_changes
 import femlab.shared.generated.resources.unsaved_changes_message
 import femlab.shared.generated.resources.warning_message
@@ -410,7 +410,7 @@ private fun UnsavedChangesWarning(onSave: () -> Unit, onOpen: () -> Unit, onDism
                 horizontalArrangement = Arrangement.SpaceAround) {
 
                 CustomButton(
-                    text = stringResource(Res.string.open),
+                    text = stringResource(Res.string.open_project),
                     onClick = onOpen
                 )
 
