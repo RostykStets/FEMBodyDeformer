@@ -10,6 +10,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -27,8 +28,6 @@ class RecordsViewModel(
 
     private val _isSavingRecord = MutableStateFlow(false)
     val isSavingRecord = _isSavingRecord.asStateFlow()
-
-    private val _savedRecordId = MutableStateFlow(-1)
 
     init {
         loadRecords()
@@ -49,13 +48,16 @@ class RecordsViewModel(
     fun createRecord(title: String, onCreateRecord: (id: Int) -> Unit) {
 
         viewModelScope.launch {
-            saveRecord(title)
+            _isSavingRecord.value = true
 
-            onCreateRecord(_savedRecordId.value)
+            val newRecordId = saveRecord(title)
+
+            _isSavingRecord.value = false
+            onCreateRecord(newRecordId)
         }
     }
 
-    private fun saveRecord(title: String) {
+    private suspend fun saveRecord(title: String) : Int {
 
         _isSavingRecord.value = true
 
@@ -67,11 +69,8 @@ class RecordsViewModel(
             dateModified = now
         )
 
-        viewModelScope.launch(Dispatchers.IO) {
-
-            _savedRecordId.value = saveSimulationRecordUseCase(newRecord).toInt()
-
-            _isSavingRecord.value = true
+        return withContext(Dispatchers.IO) {
+            saveSimulationRecordUseCase(newRecord).toInt()
         }
     }
 }
