@@ -63,6 +63,9 @@ class FEMViewModel(
     private val _isSavingData = MutableStateFlow(false)
     val isSavingData = _isSavingData.asStateFlow()
 
+    private val _hasUnsavedChanges = MutableStateFlow(false)
+    val hasUnsavedChanges = _hasUnsavedChanges.asStateFlow()
+
     fun handleSimulationRecordId(simulationRecordId: Int) {
 
         viewModelScope.launch {
@@ -153,6 +156,8 @@ class FEMViewModel(
 
         _isMappingData.value = false
 
+        _hasUnsavedChanges.value = false
+
         if (record.isBodyDeformed) {
             calculate()
         }
@@ -160,23 +165,30 @@ class FEMViewModel(
 
     fun updateSize(newSize: Vector3) {
         _bodySize.value = newSize
+        _hasUnsavedChanges.value = true
         rebuildMesh()
     }
 
     fun updateSplits(newSplits: Vector3) {
         _bodySplits.value = newSplits
+        _hasUnsavedChanges.value = true
         rebuildMesh()
     }
 
     fun updateYoungModule(value: String) {
+        _hasUnsavedChanges.value = true
         _youngModule.value = value
     }
 
     fun updatePoissonRatio(value: String) {
+        _hasUnsavedChanges.value = true
         _poissonRatio.value = value
     }
 
     fun updatePressure(value: String) {
+
+        _hasUnsavedChanges.value = true
+
         _pressure.value = value
 
         femBody.updateBoundaryArrays(value.toDoubleOrNull() ?: 0.0)
@@ -195,6 +207,9 @@ class FEMViewModel(
             femBody.fixedFaces.add(face)
             femBody.loadedFaces.remove(face)
         }
+
+        _hasUnsavedChanges.value = true
+
         femBody.updateBoundaryArrays(_pressure.value.toDoubleOrNull() ?: 0.0)
     }
 
@@ -205,6 +220,9 @@ class FEMViewModel(
             femBody.loadedFaces.add(face)
             femBody.fixedFaces.remove(face)
         }
+
+        _hasUnsavedChanges.value = true
+
         femBody.updateBoundaryArrays(_pressure.value.toDoubleOrNull() ?: 0.0)
     }
 
@@ -226,6 +244,9 @@ class FEMViewModel(
             }
 
             _deformedBody.value = result
+
+            _hasUnsavedChanges.value = true
+
             _isCalculating.value = false
         }
     }

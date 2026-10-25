@@ -1,12 +1,20 @@
 package com.rostykstets.fembodydeformer.ui.screens.scene
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +55,11 @@ import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_HEIGHT_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_DESKTOP
 import com.rostykstets.fembodydeformer.ui.screens.utilities.SCREEN_WIDTH_MOBILE
 import com.rostykstets.fembodydeformer.ui.screens.scene.viewmodels.FEMViewModel
+import com.rostykstets.fembodydeformer.ui.screens.utilities.CustomButton
 import femlab.shared.generated.resources.Res
+import femlab.shared.generated.resources.open
+import femlab.shared.generated.resources.save_changes
+import femlab.shared.generated.resources.unsaved_changes_message
 import femlab.shared.generated.resources.warning_message
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -84,6 +96,10 @@ fun SceneScreen(simulationRecordId: Int) {
 
     val simulationRecord by femViewModel.simulationRecord.collectAsState()
 
+    val hasUnsavedChanges by femViewModel.hasUnsavedChanges.collectAsState()
+
+    var showUnsavedChangesWarning by remember(hasUnsavedChanges) { mutableStateOf(false) }
+
     SceneContent(
         bodySize = bodySize,
         bodySplits = bodySplits,
@@ -108,8 +124,29 @@ fun SceneScreen(simulationRecordId: Int) {
         toggleFaceLoaded = femViewModel::toggleFaceLoaded,
         hideWarningMessage = femViewModel::hideWarningMessage,
         onSave = femViewModel::saveSimulationRecord,
-        onOpenProject = { navController.navigate(route = RecordsScreen) }
+        onOpenProject = {
+            if (hasUnsavedChanges) {
+                showUnsavedChangesWarning = true
+            } else {
+                navController.navigate(route = RecordsScreen)
+            }
+        }
     )
+
+    AnimatedVisibility(
+        visible = showUnsavedChangesWarning,
+        enter = EnterTransition.None,
+        exit = ExitTransition.None
+    ) {
+        UnsavedChangesWarning(
+            onSave = femViewModel::saveSimulationRecord,
+            onOpen = {
+                navController.navigate(route = RecordsScreen)
+                showUnsavedChangesWarning = false
+            },
+            onDismiss = { showUnsavedChangesWarning = false }
+        )
+    }
 }
 
 @Composable
@@ -218,7 +255,7 @@ private fun SceneContent(
     }
 }
 
-fun Modifier.faceSelectionGestures(
+private fun Modifier.faceSelectionGestures(
     bodySize: Vector3,
     bodySplits: Vector3,
     isCalculating: Boolean,
@@ -248,7 +285,7 @@ fun Modifier.faceSelectionGestures(
     )
 }
 
-fun Modifier.cameraTouchControls(
+private fun Modifier.cameraTouchControls(
     isCalculating: Boolean,
     camera: SimpleCamera
 ): Modifier = this.pointerInput(isCalculating) {
@@ -291,7 +328,7 @@ fun Modifier.cameraTouchControls(
     }
 }
 
-fun Modifier.cameraMouseScroll(
+private fun Modifier.cameraMouseScroll(
     isCalculating: Boolean,
     camera: SimpleCamera
 ): Modifier = this.pointerInput(isCalculating) {
@@ -334,6 +371,64 @@ private fun CalculatingIndicator(modifier: Modifier) {
 }
 
 @Composable
+private fun UnsavedChangesWarning(onSave: () -> Unit, onOpen: () -> Unit, onDismiss: () -> Unit) {
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Box(
+        modifier = Modifier.fillMaxSize().background(color = Color.Gray.copy(alpha = 0.5f))
+            .clickable(
+                enabled = false,
+                indication = null,
+                interactionSource = interactionSource,
+                onClick = onDismiss
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .size(width = 360.dp, height = 200.dp)
+                .background(
+                    color = Color.White,
+                    shape = RoundedCornerShape(8.dp)
+                ).padding(horizontal = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+
+            Spacer(modifier = Modifier.weight(0.03f))
+
+            CustomText(
+                text = stringResource(Res.string.unsaved_changes_message),
+                fontSize = 18.sp,
+                maxLines = 3
+            )
+
+            Spacer(modifier = Modifier.weight(0.05f))
+
+            Row(modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceAround) {
+
+                CustomButton(
+                    text = stringResource(Res.string.open),
+                    onClick = onOpen
+                )
+
+                CustomButton(
+                    text = stringResource(Res.string.save_changes),
+                    onClick = {
+                        onSave()
+                        onOpen()
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(0.03f))
+        }
+    }
+}
+
+@Composable
 private fun WarningMessage(hideWarningMessage: () -> Unit) {
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -350,7 +445,8 @@ private fun WarningMessage(hideWarningMessage: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(140.dp).background(
+                .size(width = 170.dp, height = 150.dp)
+                .background(
                     color = Color.White,
                     shape = RoundedCornerShape(8.dp)
                 ).padding(horizontal = 5.dp),
@@ -446,7 +542,7 @@ private fun SceneMobilePreview() {
         isCalculating = false,
         femBody = FEMBody(),
         projectTitle = "Test",
-        showWarningMessage = false,
+        showWarningMessage = true,
         isMappingData = false,
         isLoadingData = false,
         isSavingData = false,
